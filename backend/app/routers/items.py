@@ -4,7 +4,7 @@ from typing import List, Optional
 from app.database import get_db
 from app.schemas.item import ItemCreate, ItemUpdate, ItemResponse, ItemCategoryResponse
 from app.services.item_service import ItemService
-from app.services.auth_service import get_current_user
+from app.utils.auth import get_current_user
 
 router = APIRouter()
 

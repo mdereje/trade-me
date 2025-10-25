@@ -37,7 +37,8 @@ app.include_router(payments.router, prefix="/api/payments", tags=["payments"])
 app.include_router(reviews.router, prefix="/api/reviews", tags=["reviews"])
 
 # Static files for uploaded images
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")

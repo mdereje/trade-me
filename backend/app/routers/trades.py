@@ -4,7 +4,7 @@ from typing import List
 from app.database import get_db
 from app.schemas.trade import TradeOfferCreate, TradeOfferResponse, TradeResponse
 from app.services.trade_service import TradeService
-from app.services.auth_service import get_current_user
+from app.utils.auth import get_current_user
 
 router = APIRouter()
 

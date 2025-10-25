@@ -4,7 +4,7 @@ from typing import List
 from app.database import get_db
 from app.schemas.review import ReviewCreate, ReviewResponse, ReviewUpdate
 from app.services.review_service import ReviewService
-from app.services.auth_service import get_current_user
+from app.utils.auth import get_current_user
 
 router = APIRouter()
 
