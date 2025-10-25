@@ -1,145 +1,169 @@
-# Trade Me Platform - Deployment Guide
+# Trade Me Platform - Firebase Deployment Guide
 
-## 🚀 Deployment Options
+## 🚀 Firebase Deployment (Recommended)
 
-### Backend Deployment
+### Prerequisites
+1. **Install Firebase CLI:**
+   ```bash
+   npm install -g firebase-tools
+   ```
 
-#### Option 1: Railway (Recommended)
-1. **Connect to Railway:**
+2. **Login to Firebase:**
+   ```bash
+   firebase login
+   ```
+
+3. **Initialize Firebase project:**
+   ```bash
+   firebase init
+   ```
+
+### Backend Deployment (Firebase Functions)
+
+#### Step 1: Setup Firebase Functions
+1. **Initialize Firebase Functions:**
    ```bash
    cd backend
-   railway login
-   railway init
+   firebase init functions
    ```
 
-2. **Set Environment Variables:**
+2. **Install dependencies:**
    ```bash
-   railway variables set DATABASE_URL="postgresql://user:pass@host:port/db"
-   railway variables set SECRET_KEY="your-super-secret-key"
-   railway variables set STRIPE_SECRET_KEY="sk_test_..."
-   railway variables set PAYPAL_CLIENT_ID="your-paypal-client-id"
-   railway variables set PAYPAL_CLIENT_SECRET="your-paypal-secret"
-   railway variables set TWILIO_ACCOUNT_SID="your-twilio-sid"
-   railway variables set TWILIO_AUTH_TOKEN="your-twilio-token"
-   railway variables set TWILIO_PHONE_NUMBER="+1234567890"
+   cd functions
+   pip install -r requirements_firebase.txt
    ```
-
-3. **Deploy:**
-   ```bash
-   railway up
-   ```
-
-#### Option 2: Render
-1. **Connect GitHub repository to Render**
-2. **Create new Web Service**
-3. **Configure:**
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-   - Health Check Path: `/health`
-
-4. **Set Environment Variables in Render dashboard**
-
-#### Option 3: Heroku
-1. **Install Heroku CLI**
-2. **Create Heroku app:**
-   ```bash
-   cd backend
-   heroku create trade-me-backend
-   ```
-
-3. **Set environment variables:**
-   ```bash
-   heroku config:set DATABASE_URL="postgresql://..."
-   heroku config:set SECRET_KEY="your-secret-key"
-   # ... other variables
-   ```
-
-4. **Deploy:**
-   ```bash
-   git push heroku main
-   ```
-
-### Frontend Deployment
-
-#### Option 1: Vercel (Recommended)
-1. **Connect GitHub repository to Vercel**
-2. **Configure build settings:**
-   - Framework Preset: Create React App
-   - Build Command: `npm run build`
-   - Output Directory: `build`
-   - Install Command: `npm install`
 
 3. **Set Environment Variables:**
-   - `REACT_APP_API_URL`: Your backend URL (e.g., `https://trade-me-backend.railway.app`)
+   ```bash
+   firebase functions:config:set \
+     stripe.secret_key="sk_test_..." \
+     paypal.client_id="your-paypal-client-id" \
+     paypal.client_secret="your-paypal-secret" \
+     twilio.account_sid="your-twilio-sid" \
+     twilio.auth_token="your-twilio-token" \
+     twilio.phone_number="+1234567890"
+   ```
 
-4. **Deploy automatically on git push**
+4. **Deploy Functions:**
+   ```bash
+   firebase deploy --only functions
+   ```
 
-#### Option 2: Netlify
-1. **Connect GitHub repository to Netlify**
-2. **Configure build settings:**
-   - Build Command: `npm run build`
-   - Publish Directory: `build`
-   - Environment Variables: `REACT_APP_API_URL`
+### Frontend Deployment (Firebase Hosting)
 
-3. **Deploy automatically on git push**
+#### Step 1: Setup Firebase Hosting
+1. **Initialize Firebase Hosting:**
+   ```bash
+   cd frontend
+   firebase init hosting
+   ```
 
-#### Option 3: Railway
-1. **Connect GitHub repository to Railway**
-2. **Configure:**
-   - Build Command: `npm run build`
-   - Start Command: `npx serve -s build -l 3000`
-   - Environment Variables: `REACT_APP_API_URL`
+2. **Build the frontend:**
+   ```bash
+   npm run build
+   ```
+
+3. **Set Environment Variables:**
+   ```bash
+   firebase functions:config:set \
+     app.api_url="https://your-region-your-project.cloudfunctions.net/api"
+   ```
+
+4. **Deploy Hosting:**
+   ```bash
+   firebase deploy --only hosting
+   ```
+
+### Database Setup (Firestore)
+
+#### Step 1: Setup Firestore Database
+1. **Enable Firestore in Firebase Console**
+2. **Deploy Firestore rules:**
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+
+3. **Deploy Firestore indexes:**
+   ```bash
+   firebase deploy --only firestore:indexes
+   ```
+
+### Complete Deployment
+
+#### Deploy Everything at Once:
+```bash
+firebase deploy
+```
+
+#### Deploy Specific Services:
+```bash
+# Deploy only functions
+firebase deploy --only functions
+
+# Deploy only hosting
+firebase deploy --only hosting
+
+# Deploy only firestore rules
+firebase deploy --only firestore:rules
+```
 
 ## 🔧 Environment Variables
 
-### Backend (.env)
-```env
-DATABASE_URL=postgresql://user:password@host:port/database
-SECRET_KEY=your-super-secret-key-here
-STRIPE_SECRET_KEY=sk_test_...
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-secret
-TWILIO_ACCOUNT_SID=your-twilio-sid
-TWILIO_AUTH_TOKEN=your-twilio-token
-TWILIO_PHONE_NUMBER=+1234567890
+### Firebase Functions Configuration
+```bash
+# Set Firebase Functions config
+firebase functions:config:set \
+  stripe.secret_key="sk_test_..." \
+  paypal.client_id="your-paypal-client-id" \
+  paypal.client_secret="your-paypal-secret" \
+  twilio.account_sid="your-twilio-sid" \
+  twilio.auth_token="your-twilio-token" \
+  twilio.phone_number="+1234567890" \
+  app.secret_key="your-super-secret-key"
 ```
 
-### Frontend (.env)
+### Frontend Environment Variables
 ```env
-REACT_APP_API_URL=https://your-backend-url.com
+# Firebase Configuration
+REACT_APP_FIREBASE_API_KEY=your-api-key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+REACT_APP_FIREBASE_APP_ID=your-app-id
+
+# API Configuration
+REACT_APP_API_URL=https://your-region-your-project.cloudfunctions.net/api
+
+# Payment Configuration
 REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_...
 REACT_APP_PAYPAL_CLIENT_ID=your-paypal-client-id
 ```
 
-## 🐳 Docker Deployment
+## 📊 Database Setup (Firestore)
 
-### Backend
-```bash
-cd backend
-docker build -t trade-me-backend .
-docker run -p 8000:8000 --env-file .env trade-me-backend
-```
-
-### Frontend
-```bash
-cd frontend
-docker build -t trade-me-frontend .
-docker run -p 3000:80 trade-me-frontend
-```
-
-## 📊 Database Setup
-
-### PostgreSQL (Production)
-1. **Create database on Railway/Render/Heroku**
-2. **Run migrations:**
+### Firestore Database
+1. **Enable Firestore in Firebase Console**
+2. **Set up Firestore rules:**
    ```bash
-   cd backend
-   alembic upgrade head
+   firebase deploy --only firestore:rules
    ```
 
-### SQLite (Development)
-- Automatically created when running locally
-- No additional setup required
+3. **Deploy Firestore indexes:**
+   ```bash
+   firebase deploy --only firestore:indexes
+   ```
+
+4. **Configure Firestore collections:**
+   - `users` - User profiles and authentication
+   - `items` - Trade items and listings
+   - `trades` - Trade offers and transactions
+   - `reviews` - User reviews and ratings
+   - `subscriptions` - User subscription data
+
+### Local Development Database
+- SQLite automatically created when running locally
+- No additional setup required for development
 
 ## 🔐 Security Checklist
 

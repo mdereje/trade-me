@@ -1,48 +1,62 @@
 #!/bin/bash
 
-# Trade Me Platform Deployment Script
+# Trade Me Platform Firebase Deployment Script
 
-echo "🚀 Trade Me Platform Deployment Script"
-echo "======================================"
+echo "🚀 Trade Me Platform - Firebase Deployment Script"
+echo "================================================="
 
 # Check if we're in the right directory
-if [ ! -f "package.json" ]; then
+if [ ! -f "firebase.json" ]; then
     echo "❌ Error: Please run this script from the project root directory"
     exit 1
 fi
 
-# Function to deploy backend
+# Function to deploy backend (Firebase Functions)
 deploy_backend() {
-    echo "📦 Deploying Backend..."
-    cd backend
+    echo "📦 Deploying Backend (Firebase Functions)..."
     
-    # Check if Railway CLI is installed
-    if command -v railway &> /dev/null; then
-        echo "🚂 Deploying to Railway..."
-        railway up
+    # Check if Firebase CLI is installed
+    if command -v firebase &> /dev/null; then
+        echo "🔥 Deploying to Firebase Functions..."
+        firebase deploy --only functions
     else
-        echo "⚠️  Railway CLI not found. Please install it or deploy manually."
-        echo "   Visit: https://docs.railway.app/develop/cli"
+        echo "⚠️  Firebase CLI not found. Please install it first."
+        echo "   Run: npm install -g firebase-tools"
+        echo "   Then: firebase login"
     fi
-    
-    cd ..
 }
 
-# Function to deploy frontend
+# Function to deploy frontend (Firebase Hosting)
 deploy_frontend() {
-    echo "🎨 Deploying Frontend..."
+    echo "🎨 Deploying Frontend (Firebase Hosting)..."
+    
+    # Build the frontend first
+    echo "🔨 Building frontend..."
     cd frontend
-    
-    # Check if Vercel CLI is installed
-    if command -v vercel &> /dev/null; then
-        echo "▲ Deploying to Vercel..."
-        vercel --prod
-    else
-        echo "⚠️  Vercel CLI not found. Please install it or deploy manually."
-        echo "   Visit: https://vercel.com/docs/cli"
-    fi
-    
+    npm run build
     cd ..
+    
+    # Check if Firebase CLI is installed
+    if command -v firebase &> /dev/null; then
+        echo "🔥 Deploying to Firebase Hosting..."
+        firebase deploy --only hosting
+    else
+        echo "⚠️  Firebase CLI not found. Please install it first."
+        echo "   Run: npm install -g firebase-tools"
+        echo "   Then: firebase login"
+    fi
+}
+
+# Function to deploy database (Firestore)
+deploy_database() {
+    echo "🗄️  Deploying Database (Firestore)..."
+    
+    if command -v firebase &> /dev/null; then
+        echo "🔥 Deploying Firestore rules and indexes..."
+        firebase deploy --only firestore:rules,firestore:indexes
+    else
+        echo "⚠️  Firebase CLI not found. Please install it first."
+    fi
 }
 
 # Function to build and test locally
@@ -90,13 +104,14 @@ test_local() {
 
 # Main menu
 echo "Choose deployment option:"
-echo "1) Deploy Backend to Railway"
-echo "2) Deploy Frontend to Vercel"
-echo "3) Deploy Both"
-echo "4) Test Local Setup"
-echo "5) Exit"
+echo "1) Deploy Backend (Firebase Functions)"
+echo "2) Deploy Frontend (Firebase Hosting)"
+echo "3) Deploy Database (Firestore)"
+echo "4) Deploy Everything"
+echo "5) Test Local Setup"
+echo "6) Exit"
 
-read -p "Enter your choice (1-5): " choice
+read -p "Enter your choice (1-6): " choice
 
 case $choice in
     1)
@@ -106,13 +121,18 @@ case $choice in
         deploy_frontend
         ;;
     3)
+        deploy_database
+        ;;
+    4)
+        echo "🚀 Deploying everything to Firebase..."
+        deploy_database
         deploy_backend
         deploy_frontend
         ;;
-    4)
+    5)
         test_local
         ;;
-    5)
+    6)
         echo "👋 Goodbye!"
         exit 0
         ;;
