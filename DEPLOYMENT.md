@@ -5,7 +5,9 @@
 ### Backend Deployment
 
 #### Option 1: Railway (Recommended)
+
 1. **Connect to Railway:**
+
    ```bash
    cd backend
    railway login
@@ -13,6 +15,7 @@
    ```
 
 2. **Set Environment Variables:**
+
    ```bash
    railway variables set DATABASE_URL="postgresql://user:pass@host:port/db"
    railway variables set SECRET_KEY="your-super-secret-key"
@@ -30,9 +33,11 @@
    ```
 
 #### Option 2: Render
+
 1. **Connect GitHub repository to Render**
 2. **Create new Web Service**
 3. **Configure:**
+
    - Build Command: `pip install -r requirements.txt`
    - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
    - Health Check Path: `/health`
@@ -40,14 +45,17 @@
 4. **Set Environment Variables in Render dashboard**
 
 #### Option 3: Heroku
+
 1. **Install Heroku CLI**
 2. **Create Heroku app:**
+
    ```bash
    cd backend
    heroku create trade-me-backend
    ```
 
 3. **Set environment variables:**
+
    ```bash
    heroku config:set DATABASE_URL="postgresql://..."
    heroku config:set SECRET_KEY="your-secret-key"
@@ -62,21 +70,26 @@
 ### Frontend Deployment
 
 #### Option 1: Vercel (Recommended)
+
 1. **Connect GitHub repository to Vercel**
 2. **Configure build settings:**
+
    - Framework Preset: Create React App
    - Build Command: `npm run build`
    - Output Directory: `build`
    - Install Command: `npm install`
 
 3. **Set Environment Variables:**
+
    - `REACT_APP_API_URL`: Your backend URL (e.g., `https://trade-me-backend.railway.app`)
 
 4. **Deploy automatically on git push**
 
 #### Option 2: Netlify
+
 1. **Connect GitHub repository to Netlify**
 2. **Configure build settings:**
+
    - Build Command: `npm run build`
    - Publish Directory: `build`
    - Environment Variables: `REACT_APP_API_URL`
@@ -84,6 +97,7 @@
 3. **Deploy automatically on git push**
 
 #### Option 3: Railway
+
 1. **Connect GitHub repository to Railway**
 2. **Configure:**
    - Build Command: `npm run build`
@@ -93,6 +107,7 @@
 ## 🔧 Environment Variables
 
 ### Backend (.env)
+
 ```env
 DATABASE_URL=postgresql://user:password@host:port/database
 SECRET_KEY=your-super-secret-key-here
@@ -105,6 +120,7 @@ TWILIO_PHONE_NUMBER=+1234567890
 ```
 
 ### Frontend (.env)
+
 ```env
 REACT_APP_API_URL=https://your-backend-url.com
 REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -114,6 +130,7 @@ REACT_APP_PAYPAL_CLIENT_ID=your-paypal-client-id
 ## 🐳 Docker Deployment
 
 ### Backend
+
 ```bash
 cd backend
 docker build -t trade-me-backend .
@@ -121,6 +138,7 @@ docker run -p 8000:8000 --env-file .env trade-me-backend
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 docker build -t trade-me-frontend .
@@ -130,6 +148,7 @@ docker run -p 3000:80 trade-me-frontend
 ## 📊 Database Setup
 
 ### PostgreSQL (Production)
+
 1. **Create database on Railway/Render/Heroku**
 2. **Run migrations:**
    ```bash
@@ -138,6 +157,7 @@ docker run -p 3000:80 trade-me-frontend
    ```
 
 ### SQLite (Development)
+
 - Automatically created when running locally
 - No additional setup required
 
@@ -154,10 +174,12 @@ docker run -p 3000:80 trade-me-frontend
 ## 📈 Monitoring
 
 ### Backend Health Check
+
 - Endpoint: `/health`
 - Returns: `{"status": "healthy"}`
 
 ### Frontend Health Check
+
 - Check if app loads without errors
 - Monitor API connectivity
 
@@ -166,11 +188,13 @@ docker run -p 3000:80 trade-me-frontend
 ### Common Issues
 
 1. **Backend won't start:**
+
    - Check environment variables
    - Verify database connection
    - Check port availability
 
 2. **Frontend build fails:**
+
    - Check Node.js version (18+)
    - Clear node_modules and reinstall
    - Check for TypeScript errors
@@ -181,6 +205,7 @@ docker run -p 3000:80 trade-me-frontend
    - Verify credentials
 
 ### Logs
+
 - **Railway:** `railway logs`
 - **Render:** Check dashboard logs
 - **Vercel:** Check function logs
@@ -189,6 +214,7 @@ docker run -p 3000:80 trade-me-frontend
 ## 🔄 CI/CD Pipeline
 
 ### GitHub Actions (Optional)
+
 ```yaml
 name: Deploy
 on:
@@ -222,12 +248,14 @@ jobs:
 ## 🎯 Recommended Setup
 
 **For Production:**
+
 - Backend: Railway + PostgreSQL
 - Frontend: Vercel
 - Database: Railway PostgreSQL
 - Monitoring: Railway logs + Vercel analytics
 
 **For Development:**
+
 - Backend: Local with SQLite
 - Frontend: Local with npm start
 - Database: SQLite (included)
