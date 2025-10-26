@@ -8,6 +8,7 @@
 - **Description**: React-based user interface for the Trade Me application
 - **Features**: User authentication, item browsing, trade management, profile management
 - **Note**: If the page appears blank, clear your browser cache or try a hard refresh (Ctrl+F5)
+- **Alternative URL**: https://storage.googleapis.com/trade-me-476221-trade-me-frontend/index.html?v=1 (with cache-busting parameter)
 
 ### Backend (FastAPI)
 
