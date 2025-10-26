@@ -7,6 +7,7 @@ This guide explains how to set up GitHub Actions for automated testing and deplo
 To enable automated deployment, you need to configure the following secrets in your GitHub repository:
 
 ### 1. Google Cloud Service Account Key
+
 - **Secret Name**: `GCP_SA_KEY`
 - **Description**: JSON key for Google Cloud Service Account with deployment permissions
 - **How to get it**:
@@ -22,16 +23,19 @@ To enable automated deployment, you need to configure the following secrets in y
   6. Copy the entire JSON content and paste it as the secret value
 
 ### 2. Database Password
+
 - **Secret Name**: `DB_PASSWORD`
 - **Description**: Password for the PostgreSQL database user
 - **Value**: The password you set for the `trademe_user` database user
 
 ### 3. Application Secrets
+
 - **Secret Name**: `SECRET_KEY`
 - **Description**: JWT signing key for the application
 - **Value**: Generate a secure random string (32+ characters)
 
 ### 4. Payment Provider Keys (Optional)
+
 - **Secret Name**: `STRIPE_SECRET_KEY`
 - **Description**: Stripe secret key for payment processing
 - **Value**: Your Stripe secret key (starts with `sk_`)
@@ -45,6 +49,7 @@ To enable automated deployment, you need to configure the following secrets in y
 - **Value**: Your PayPal client secret
 
 ### 5. SMS Provider Keys (Optional)
+
 - **Secret Name**: `TWILIO_ACCOUNT_SID`
 - **Description**: Twilio account SID
 - **Value**: Your Twilio account SID
@@ -58,6 +63,7 @@ To enable automated deployment, you need to configure the following secrets in y
 - **Value**: Your Twilio phone number (e.g., `+1234567890`)
 
 ### 6. Frontend Environment Variables
+
 - **Secret Name**: `REACT_APP_STRIPE_PUBLISHABLE_KEY`
 - **Description**: Stripe publishable key for frontend
 - **Value**: Your Stripe publishable key (starts with `pk_`)
@@ -78,12 +84,14 @@ To enable automated deployment, you need to configure the following secrets in y
 ## Workflow Behavior
 
 ### On Branch Push/PR (develop, main)
+
 - ✅ **Backend Tests**: Runs Python tests using pytest
 - ✅ **Frontend Tests**: Runs React tests with coverage
 - ✅ **Frontend Linting**: Runs ESLint to check code quality
 - ✅ **Integration Tests**: Runs integration tests (if available)
 
 ### On Main Branch Merge
+
 - ✅ **All Tests**: Runs all test suites
 - ✅ **Backend Deployment**: Deploys to Google Cloud Run
 - ✅ **Frontend Deployment**: Builds and deploys to Cloud Storage
@@ -92,16 +100,19 @@ To enable automated deployment, you need to configure the following secrets in y
 ## Test Structure
 
 ### Backend Tests
+
 - Location: `backend/tests/`
 - Framework: pytest
 - Coverage: Basic endpoint and functionality tests
 
 ### Frontend Tests
+
 - Location: `frontend/src/`
 - Framework: Jest + React Testing Library
 - Coverage: Component rendering and basic functionality
 
 ### Integration Tests
+
 - Location: `backend/tests/integration/`
 - Framework: pytest
 - Coverage: End-to-end API testing
@@ -120,14 +131,17 @@ After setting up secrets, you can monitor the workflow:
 ### Common Issues
 
 1. **Authentication Failed**
+
    - Check that `GCP_SA_KEY` is correctly formatted JSON
    - Verify service account has required permissions
 
 2. **Database Connection Failed**
+
    - Check that `DB_PASSWORD` matches the database user password
    - Verify Cloud SQL instance is running
 
 3. **Build Failed**
+
    - Check that all dependencies are properly specified
    - Verify Node.js and Python versions match
 
