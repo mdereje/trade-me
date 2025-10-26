@@ -3,17 +3,21 @@
 ## 🚀 Deployed Infrastructure
 
 ### Frontend (React App)
+
 - **URL**: https://storage.googleapis.com/trade-me-476221-trade-me-frontend/index.html
 - **Description**: React-based user interface for the Trade Me application
 - **Features**: User authentication, item browsing, trade management, profile management
+- **Note**: If the page appears blank, clear your browser cache or try a hard refresh (Ctrl+F5)
 
 ### Backend (FastAPI)
+
 - **URL**: https://trade-me-backend-325079353832.us-central1.run.app
 - **Description**: RESTful API backend built with FastAPI
 - **Database**: PostgreSQL on Google Cloud SQL
 - **Region**: us-central1
 
 ### Database
+
 - **Instance**: trade-me-db
 - **Database**: trademe
 - **User**: trademe_user
@@ -22,20 +26,25 @@
 ## 🔧 API Endpoints
 
 ### Health Check
+
 ```bash
 curl https://trade-me-backend-325079353832.us-central1.run.app/health
 ```
+
 **Response**: `{"status":"healthy"}`
 
 ### Root Endpoint
+
 ```bash
 curl https://trade-me-backend-325079353832.us-central1.run.app/
 ```
+
 **Response**: `{"message":"Trade Me API is running!"}`
 
 ### Authentication Endpoints
 
 #### Register User
+
 ```bash
 curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/auth/register \
   -H "Content-Type: application/json" \
@@ -48,6 +57,7 @@ curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/auth/
 ```
 
 #### Login User
+
 ```bash
 curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/auth/login \
   -H "Content-Type: application/json" \
@@ -60,11 +70,13 @@ curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/auth/
 ### Items Endpoints
 
 #### Get All Items
+
 ```bash
 curl https://trade-me-backend-325079353832.us-central1.run.app/api/items/
 ```
 
 #### Create New Item
+
 ```bash
 curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/items/ \
   -H "Content-Type: application/json" \
@@ -79,6 +91,7 @@ curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/items
 ```
 
 #### Get Item by ID
+
 ```bash
 curl https://trade-me-backend-325079353832.us-central1.run.app/api/items/1
 ```
@@ -86,12 +99,14 @@ curl https://trade-me-backend-325079353832.us-central1.run.app/api/items/1
 ### Trades Endpoints
 
 #### Get All Trades
+
 ```bash
 curl https://trade-me-backend-325079353832.us-central1.run.app/api/trades/ \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### Create Trade Request
+
 ```bash
 curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/trades/ \
   -H "Content-Type: application/json" \
@@ -106,12 +121,14 @@ curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/trade
 ### Users Endpoints
 
 #### Get User Profile
+
 ```bash
 curl https://trade-me-backend-325079353832.us-central1.run.app/api/users/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### Update User Profile
+
 ```bash
 curl -X PUT https://trade-me-backend-325079353832.us-central1.run.app/api/users/profile \
   -H "Content-Type: application/json" \
@@ -126,11 +143,13 @@ curl -X PUT https://trade-me-backend-325079353832.us-central1.run.app/api/users/
 ### Reviews Endpoints
 
 #### Get Reviews for User
+
 ```bash
 curl https://trade-me-backend-325079353832.us-central1.run.app/api/reviews/user/1
 ```
 
 #### Create Review
+
 ```bash
 curl -X POST https://trade-me-backend-325079353832.us-central1.run.app/api/reviews/ \
   -H "Content-Type: application/json" \
@@ -163,16 +182,19 @@ Authorization: Bearer YOUR_JWT_TOKEN
 ## 🛠️ Development & Updates
 
 ### Update Backend
+
 ```bash
 ./update-gcp.sh
 ```
 
 ### View Logs
+
 ```bash
 gcloud run services logs read trade-me-backend --region us-central1
 ```
 
 ### Update Environment Variables
+
 ```bash
 gcloud run services update trade-me-backend --region us-central1 --set-env-vars KEY=VALUE
 ```
@@ -186,6 +208,7 @@ gcloud run services update trade-me-backend --region us-central1 --set-env-vars 
 ## 🔧 Configuration
 
 ### Environment Variables
+
 - `DATABASE_URL`: PostgreSQL connection string
 - `SECRET_KEY`: JWT signing key
 - `STRIPE_SECRET_KEY`: Payment processing
@@ -194,6 +217,7 @@ gcloud run services update trade-me-backend --region us-central1 --set-env-vars 
 - `CORS_ORIGINS`: Allowed frontend origins
 
 ### Database Connection
+
 The application connects to Cloud SQL using the Cloud SQL Proxy, which is automatically configured in Cloud Run.
 
 ## 🚨 Troubleshooting
@@ -206,6 +230,7 @@ The application connects to Cloud SQL using the Cloud SQL Proxy, which is automa
 4. **File Uploads**: Ensure static directory permissions are correct
 
 ### Health Checks
+
 - Backend: `curl https://trade-me-backend-325079353832.us-central1.run.app/health`
 - Frontend: Visit the URL and check browser console for errors
 

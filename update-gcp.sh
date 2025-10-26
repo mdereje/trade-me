@@ -54,6 +54,7 @@ cat > .env << EOF
 REACT_APP_API_URL=$BACKEND_URL
 REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
 REACT_APP_PAYPAL_CLIENT_ID=your_paypal_client_id
+PUBLIC_URL=https://storage.googleapis.com/trade-me-476221-trade-me-frontend
 EOF
 
 # Build the frontend
