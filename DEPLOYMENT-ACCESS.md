@@ -4,7 +4,7 @@
 
 ### Frontend (React App)
 
-- **URL**: https://storage.googleapis.com/trade-me-476221-trade-me-frontend/app.html
+- **URL**: https://storage.googleapis.com/trade-me-476221-trade-me-frontend/app-v2.html
 - **Description**: React-based user interface for the Trade Me application
 - **Features**: User authentication, item browsing, trade management, profile management
 - **Note**: This URL bypasses caching issues and loads the correct version with proper asset paths

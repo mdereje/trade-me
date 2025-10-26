@@ -63,11 +63,11 @@ npm run build
 # Deploy to Cloud Storage
 gsutil -m cp -r build/* gs://$PROJECT_ID-trade-me-frontend
 
-# Create app.html to bypass caching issues
-gsutil cp build/index.html gs://$PROJECT_ID-trade-me-frontend/app.html
+# Create app-v2.html to bypass caching issues
+gsutil cp build/index.html gs://$PROJECT_ID-trade-me-frontend/app-v2.html
 
 # Get frontend URL
-FRONTEND_URL="https://storage.googleapis.com/$PROJECT_ID-trade-me-frontend/app.html"
+FRONTEND_URL="https://storage.googleapis.com/$PROJECT_ID-trade-me-frontend/app-v2.html"
 echo -e "${GREEN}✅ Frontend updated at: $FRONTEND_URL${NC}"
 
 echo -e "${GREEN}🎉 Update completed successfully!${NC}"
