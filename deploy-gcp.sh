@@ -167,8 +167,11 @@ npm run build
 # Deploy to Cloud Storage
 gsutil -m cp -r build/* gs://$PROJECT_ID-trade-me-frontend
 
+# Create app.html to bypass caching issues
+gsutil cp build/index.html gs://$PROJECT_ID-trade-me-frontend/app.html
+
 # Get frontend URL
-FRONTEND_URL="https://storage.googleapis.com/$PROJECT_ID-trade-me-frontend/index.html"
+FRONTEND_URL="https://storage.googleapis.com/$PROJECT_ID-trade-me-frontend/app.html"
 echo -e "${GREEN}✅ Frontend deployed at: $FRONTEND_URL${NC}"
 
 # Database tables are created automatically by the application
