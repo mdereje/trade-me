@@ -55,7 +55,8 @@ class Item(Base):
     category = relationship("ItemCategory")
     photos = relationship("ItemPhoto", back_populates="item",
                           cascade="all, delete-orphan")
-    trade_offers = relationship("TradeOffer", back_populates="item")
+    trade_offers = relationship(
+        "TradeOffer", foreign_keys="TradeOffer.item_id", back_populates="item")
 
 
 class ItemPhoto(Base):
