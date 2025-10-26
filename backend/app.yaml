@@ -1,0 +1,53 @@
+runtime: python312
+service: trade-me-backend
+
+env_variables:
+  # Database configuration
+  DATABASE_URL: "postgresql://$(DB_USER):$(DB_PASSWORD)@/$(DB_NAME)?host=/cloudsql/$(PROJECT_ID):$(REGION):$(INSTANCE_NAME)"
+
+  # Application settings
+  SECRET_KEY: $(SECRET_KEY)
+
+  # Payment providers
+  STRIPE_SECRET_KEY: $(STRIPE_SECRET_KEY)
+  PAYPAL_CLIENT_ID: $(PAYPAL_CLIENT_ID)
+  PAYPAL_CLIENT_SECRET: $(PAYPAL_CLIENT_SECRET)
+
+  # SMS/Phone verification
+  TWILIO_ACCOUNT_SID: $(TWILIO_ACCOUNT_SID)
+  TWILIO_AUTH_TOKEN: $(TWILIO_AUTH_TOKEN)
+  TWILIO_PHONE_NUMBER: $(TWILIO_PHONE_NUMBER)
+
+  # CORS settings
+  CORS_ORIGINS: "https://your-frontend-domain.com"
+
+# Cloud SQL configuration
+beta_settings:
+  cloud_sql_instances: $(PROJECT_ID):$(REGION):$(INSTANCE_NAME)
+
+# Automatic scaling
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.6
+
+# Health check
+readiness_check:
+  path: "/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+liveness_check:
+  path: "/health"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+# Resources
+resources:
+  cpu: 1
+  memory_gb: 2
+  disk_size_gb: 10

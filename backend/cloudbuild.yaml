@@ -1,0 +1,54 @@
+steps:
+  # Build the Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      ["build", "-t", "gcr.io/$PROJECT_ID/trade-me-backend:$COMMIT_SHA", "."]
+    dir: "backend"
+
+  # Push the image to Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/trade-me-backend:$COMMIT_SHA"]
+
+  # Deploy to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "trade-me-backend"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/trade-me-backend:$COMMIT_SHA"
+      - "--platform"
+      - "managed"
+      - "--region"
+      - "us-central1"
+      - "--allow-unauthenticated"
+      - "--set-env-vars"
+      - "DATABASE_URL=postgresql://$(DB_USER):$(DB_PASSWORD)@/$(DB_NAME)?host=/cloudsql/$(PROJECT_ID):$(REGION):$(INSTANCE_NAME)"
+      - "--set-env-vars"
+      - "SECRET_KEY=$(SECRET_KEY)"
+      - "--set-env-vars"
+      - "STRIPE_SECRET_KEY=$(STRIPE_SECRET_KEY)"
+      - "--set-env-vars"
+      - "PAYPAL_CLIENT_ID=$(PAYPAL_CLIENT_ID)"
+      - "--set-env-vars"
+      - "PAYPAL_CLIENT_SECRET=$(PAYPAL_CLIENT_SECRET)"
+      - "--set-env-vars"
+      - "TWILIO_ACCOUNT_SID=$(TWILIO_ACCOUNT_SID)"
+      - "--set-env-vars"
+      - "TWILIO_AUTH_TOKEN=$(TWILIO_AUTH_TOKEN)"
+      - "--set-env-vars"
+      - "TWILIO_PHONE_NUMBER=$(TWILIO_PHONE_NUMBER)"
+      - "--set-env-vars"
+      - "CORS_ORIGINS=https://your-frontend-domain.com"
+      - "--add-cloudsql-instances"
+      - "$(PROJECT_ID):$(REGION):$(INSTANCE_NAME)"
+
+# Store images in Container Registry
+images:
+  - "gcr.io/$PROJECT_ID/trade-me-backend:$COMMIT_SHA"
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: "E2_HIGHCPU_8"
