@@ -46,22 +46,16 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
+        run: npm ci --workspace frontend
 
       - name: Run frontend tests
-        run: |
-          cd frontend
-          npm test -- --coverage --watchAll=false
+        run: npm run test --workspace frontend -- --coverage --watchAll=false
 
       - name: Run frontend linting
-        run: |
-          cd frontend
-          npm run lint || echo "Linting completed with warnings"
+        run: npm run lint --workspace frontend || echo "Linting completed with warnings"
 
   test-integration:
     runs-on: ubuntu-latest
@@ -149,12 +143,10 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: |
-          cd frontend
-          npm ci
+        run: npm ci --workspace frontend
 
       - name: Build frontend
         run: |

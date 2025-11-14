@@ -1,0 +1,40 @@
+steps:
+  # Install dependencies and build
+  - name: "node:18"
+    entrypoint: "npm"
+    args: ["ci"]
+    dir: "frontend"
+
+  - name: "node:18"
+    entrypoint: "npm"
+    args: ["run", "build"]
+    dir: "frontend"
+    env:
+      - "REACT_APP_API_URL=https://trade-me-backend-$(PROJECT_ID).uc.r.appspot.com"
+
+  # Copy build files to Cloud Storage
+  - name: "gcr.io/cloud-builders/gsutil"
+    args:
+      [
+        "-m",
+        "cp",
+        "-r",
+        "frontend/build/*",
+        "gs://$PROJECT_ID-trade-me-frontend",
+      ]
+
+  # Invalidate Cloud CDN cache
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "compute"
+      - "url-maps"
+      - "invalidate-cdn-cache"
+      - "trade-me-frontend-cdn"
+      - "--path"
+      - "/*"
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: "E2_HIGHCPU_4"

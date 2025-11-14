@@ -148,6 +148,10 @@ out/
 coverage/
 .nyc_output/
 
+# Allow tracked assets in workspace directories
+!frontend/public/
+!frontend/public/**
+
 # Lock files (keep package-lock.json but ignore others)
 yarn.lock
 pnpm-lock.yaml
