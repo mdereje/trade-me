@@ -50,6 +50,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const API_BASE_URL =
+    process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+  const buildApiUrl = (path: string) => {
+    const base = API_BASE_URL.endsWith('/')
+      ? API_BASE_URL.slice(0, -1)
+      : API_BASE_URL;
+    return `${base}${path}`;
+  };
+
   const validateToken = async (token: string) => {
     try {
       // TODO: Implement token validation with backend
@@ -65,7 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       // TODO: Implement login API call
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         city: userData.city,
         state: userData.state,
       };
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
