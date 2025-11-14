@@ -8,6 +8,7 @@
 - **Description**: React-based user interface for the Trade Me application
 - **Features**: User authentication, item browsing, trade management, profile management
 - **Note**: This URL bypasses caching issues and loads the correct version with proper asset paths
+- **Auth Setup**: See `AUTH-SETUP.md` for configuring email/social/SMS registration
 
 ### Backend (FastAPI)
 

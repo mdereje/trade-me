@@ -27,6 +27,7 @@ class AuthService:
             email=user_data.email,
             username=user_data.username,
             full_name=user_data.full_name,
+            password_hash=hashed_password,
             phone_number=user_data.phone_number,
             zip_code=user_data.zip_code,
             city=user_data.city,

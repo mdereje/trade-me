@@ -6,12 +6,13 @@ from app.schemas.user import UserCreate, UserResponse
 from app.services.auth_service import AuthService
 from app.utils.auth import get_current_user
 from app.services.user_service import UserService
+from app.utils.security import create_access_token
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register")
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     auth_service = AuthService(db)
@@ -26,8 +27,23 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
         )
 
     # Create user
+    if (
+        not user_data.password
+        and not any([user_data.google_id, user_data.facebook_id, user_data.twitter_id])
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password is required for email registration."
+        )
+
     user = auth_service.create_user(user_data)
-    return user
+    token = create_access_token(data={"sub": user.email})
+    user_response = UserResponse.model_validate(user)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user_response.model_dump()
+    }
 
 
 @router.post("/login")
