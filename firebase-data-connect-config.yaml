@@ -1,0 +1,29 @@
+# Firebase Data Connect Configuration
+# This configuration connects to your PostgreSQL database
+
+connectors:
+  - name: postgresql_connector
+    type: postgresql
+    config:
+      # Connection details will be set via Firebase Data Connect service
+      # These can be configured in the Firebase Console under Data Connect
+      host: ${FIREBASE_DATA_CONNECT_HOST}
+      port: 5432
+      database: ${FIREBASE_DATA_CONNECT_DATABASE}
+      user: ${FIREBASE_DATA_CONNECT_USER}
+      password: ${FIREBASE_DATA_CONNECT_PASSWORD}
+      sslmode: require
+
+schemas:
+  - connector: postgresql_connector
+    schema: public
+    tables:
+      - users
+      - items
+      - item_categories
+      - item_photos
+      - trade_offers
+      - trades
+      - reviews
+      - subscriptions
+

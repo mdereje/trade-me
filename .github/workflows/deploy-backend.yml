@@ -1,0 +1,92 @@
+name: Deploy Backend to Firebase Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+      - "backend/Dockerfile"
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: trade-me-13f73
+  REGION: us-central1
+  SERVICE_NAME: backend
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend to Cloud Run (Firebase Hosting Integration)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Authenticate Docker
+        run: gcloud auth configure-docker
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        working-directory: ./backend
+        run: |
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/backend:${{ github.sha }} .
+          docker tag gcr.io/${{ env.PROJECT_ID }}/backend:${{ github.sha }} gcr.io/${{ env.PROJECT_ID }}/backend:latest
+
+      - name: Push Docker image
+        run: |
+          docker push gcr.io/${{ env.PROJECT_ID }}/backend:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/backend:latest
+
+      - name: Deploy to Cloud Run (for Firebase Hosting integration)
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/backend:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 300 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --set-env-vars "ALGORITHM=HS256,ACCESS_TOKEN_EXPIRE_MINUTES=30,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }}" \
+            --set-secrets "DATABASE_URL=database-url:latest,SECRET_KEY=secret-key:latest" \
+            --add-cloudsql-instances ${{ env.PROJECT_ID }}:${{ env.REGION }}:trade-me-db \
+            --project ${{ env.PROJECT_ID }}
+
+      - name: Get Cloud Run URL
+        id: get-url
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --format="value(status.url)" \
+            --project ${{ env.PROJECT_ID }})
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          echo "## ✅ Backend Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend" >> $GITHUB_STEP_SUMMARY
+          echo "- **Direct URL**: ${{ steps.get-url.outputs.SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Deployed to Cloud Run (integrated with Firebase Hosting)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### API Access" >> $GITHUB_STEP_SUMMARY
+          echo "- **Via Firebase Hosting**: https://${{ env.PROJECT_ID }}.web.app/api" >> $GITHUB_STEP_SUMMARY
+          echo "- **Direct Backend URL**: ${{ steps.get-url.outputs.SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: ${{ steps.get-url.outputs.SERVICE_URL }}/health" >> $GITHUB_STEP_SUMMARY

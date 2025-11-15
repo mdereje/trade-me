@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "trade-me-13f73",
+    "development": "trade-me-13f73-dev",
+    "production": "trade-me-13f73"
+  }
+}
+

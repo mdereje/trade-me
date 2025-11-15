@@ -1,0 +1,75 @@
+name: Deploy Frontend to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+      - "firebase.json"
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: trade-me-13f73
+
+jobs:
+  deploy-frontend:
+    name: Deploy Frontend to Firebase Hosting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Create production env file
+        working-directory: ./frontend
+        run: |
+          # Use /api for Firebase Hosting rewrites to Cloud Run
+          echo "REACT_APP_API_URL=/api" > .env.production
+          if [ -n "${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}" ]; then
+            echo "REACT_APP_GOOGLE_CLIENT_ID=${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}" >> .env.production
+          fi
+          if [ -n "${{ secrets.REACT_APP_FACEBOOK_APP_ID }}" ]; then
+            echo "REACT_APP_FACEBOOK_APP_ID=${{ secrets.REACT_APP_FACEBOOK_APP_ID }}" >> .env.production
+          fi
+          if [ -n "${{ secrets.REACT_APP_STRIPE_PUBLISHABLE_KEY }}" ]; then
+            echo "REACT_APP_STRIPE_PUBLISHABLE_KEY=${{ secrets.REACT_APP_STRIPE_PUBLISHABLE_KEY }}" >> .env.production
+          fi
+          if [ -n "${{ secrets.REACT_APP_PAYPAL_CLIENT_ID }}" ]; then
+            echo "REACT_APP_PAYPAL_CLIENT_ID=${{ secrets.REACT_APP_PAYPAL_CLIENT_ID }}" >> .env.production
+          fi
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SA_KEY }}"
+          channelId: live
+          projectId: ${{ env.PROJECT_ID }}
+
+      - name: Deployment Summary
+        run: |
+          echo "## ✅ Frontend Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: https://${{ env.PROJECT_ID }}.web.app" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Deployed to Firebase Hosting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### API Access" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Base**: https://${{ env.PROJECT_ID }}.web.app/api" >> $GITHUB_STEP_SUMMARY

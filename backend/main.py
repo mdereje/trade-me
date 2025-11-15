@@ -20,15 +20,29 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Get Firebase project ID for dynamic CORS origins
+# Defaults to trade-me-13f73 if not set
+FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "trade-me-13f73")
+cors_origins = [
+    "http://localhost:3000",
+    "https://storage.googleapis.com",
+]
+
+# Add Firebase Hosting domains if project ID is set
+if FIREBASE_PROJECT_ID:
+    cors_origins.extend([
+        f"https://{FIREBASE_PROJECT_ID}.web.app",
+        f"https://{FIREBASE_PROJECT_ID}.firebaseapp.com",
+    ])
+
+# Add custom CORS origins from environment variable
+custom_origins = os.getenv("CORS_ORIGINS", "")
+if custom_origins:
+    cors_origins.extend(custom_origins.split(","))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://trade-me.vercel.app",
-        "https://storage.googleapis.com",
-        os.getenv("CORS_ORIGINS", "").split(
-            ",") if os.getenv("CORS_ORIGINS") else []
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

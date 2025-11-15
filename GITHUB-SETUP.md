@@ -6,21 +6,20 @@ This guide explains how to set up GitHub Actions for automated testing and deplo
 
 To enable automated deployment, you need to configure the following secrets in your GitHub repository:
 
-### 1. Google Cloud Service Account Key
+### 1. Firebase Service Account Key (Required)
 
-- **Secret Name**: `GCP_SA_KEY`
-- **Description**: JSON key for Google Cloud Service Account with deployment permissions
+- **Secret Name**: `FIREBASE_SA_KEY`
+- **Description**: JSON key for Firebase/Google Cloud Service Account with deployment permissions (required for GitHub Actions deployment)
 - **How to get it**:
-  1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-  2. Navigate to IAM & Admin > Service Accounts
-  3. Create a new service account or use existing one
-  4. Grant the following roles:
+  1. Go to [Firebase Console](https://console.firebase.google.com/)
+  2. Navigate to Project Settings > Service Accounts
+  3. Click "Generate new private key"
+  4. Copy the entire JSON content and paste it as the secret value
+  5. Ensure the service account has these roles:
      - Cloud Run Admin
-     - Storage Admin
-     - Cloud SQL Admin
      - Service Account User
-  5. Create and download a JSON key
-  6. Copy the entire JSON content and paste it as the secret value
+     - Secret Manager Secret Accessor
+     - Cloud SQL Client
 
 ### 2. Database Password
 
@@ -83,19 +82,36 @@ To enable automated deployment, you need to configure the following secrets in y
 
 ## Workflow Behavior
 
-### On Branch Push/PR (develop, main)
+### Test Workflow (`.github/workflows/test.yml`)
+
+**Triggers**: On any push to any branch or pull request
 
 - ✅ **Backend Tests**: Runs Python tests using pytest
 - ✅ **Frontend Tests**: Runs React tests with coverage
 - ✅ **Frontend Linting**: Runs ESLint to check code quality
-- ✅ **Integration Tests**: Runs integration tests (if available)
+- ✅ **Independent**: Tests run independently and do not block deployments
 
-### On Main Branch Merge
+### Frontend Deployment (`.github/workflows/deploy-frontend.yml`)
 
-- ✅ **All Tests**: Runs all test suites
-- ✅ **Backend Deployment**: Deploys to Google Cloud Run
-- ✅ **Frontend Deployment**: Builds and deploys to Cloud Storage
-- ✅ **Notification**: Reports deployment status
+**Triggers**:
+
+- On push to `main` branch when frontend files change (`frontend/**`)
+- Manual trigger via workflow_dispatch
+
+- ✅ **Build**: Builds React application
+- ✅ **Deploy**: Deploys to Firebase Hosting
+- ✅ **Independent**: Deploys independently when only frontend code changes
+
+### Backend Deployment (`.github/workflows/deploy-backend.yml`)
+
+**Triggers**:
+
+- On push to `main` branch when backend files change (`backend/**`)
+- Manual trigger via workflow_dispatch
+
+- ✅ **Build**: Builds Docker image
+- ✅ **Deploy**: Deploys to Cloud Run (integrated with Firebase Hosting)
+- ✅ **Independent**: Deploys independently when only backend code changes
 
 ## Test Structure
 
@@ -132,7 +148,7 @@ After setting up secrets, you can monitor the workflow:
 
 1. **Authentication Failed**
 
-   - Check that `GCP_SA_KEY` is correctly formatted JSON
+   - Check that `FIREBASE_SA_KEY` is correctly formatted JSON (if using)
    - Verify service account has required permissions
 
 2. **Database Connection Failed**
@@ -152,5 +168,40 @@ After setting up secrets, you can monitor the workflow:
 ### Getting Help
 
 - Check the **Actions** tab for detailed error logs
-- Review the workflow file: `.github/workflows/deploy.yml`
+- Review the workflow files:
+  - `.github/workflows/test.yml` - Test workflow
+  - `.github/workflows/deploy-frontend.yml` - Frontend deployment
+  - `.github/workflows/deploy-backend.yml` - Backend deployment
 - Ensure all secrets are properly configured
+
+## Workflow Details
+
+### Separate Workflows
+
+1. **Test Workflow** (`.github/workflows/test.yml`):
+
+   - Runs on every push to any branch
+   - Runs backend and frontend tests independently
+   - Does not trigger deployments
+
+2. **Frontend Deployment** (`.github/workflows/deploy-frontend.yml`):
+
+   - Only triggers when `frontend/**` files change on `main` branch
+   - Builds and deploys React app to Firebase Hosting
+   - Can be manually triggered if needed
+
+3. **Backend Deployment** (`.github/workflows/deploy-backend.yml`):
+   - Only triggers when `backend/**` files change on `main` branch
+   - Builds Docker image and deploys to Cloud Run
+   - Integrates with Firebase Hosting for API access
+
+### Path-based Triggers
+
+- **Frontend deploys** when files in `frontend/` change
+- **Backend deploys** when files in `backend/` change
+- Both can deploy independently without affecting each other
+- Tests always run regardless of what changed
+
+### Firebase Hosting Integration
+
+The backend is accessible via Firebase Hosting at `/api/**` routes, which are automatically rewritten to the Cloud Run service. The frontend uses `/api` as the API base URL, routing all requests through Firebase Hosting.

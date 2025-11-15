@@ -213,13 +213,36 @@ npm test
 
 ## 🚀 Deployment
 
-### Frontend (Vercel)
+### Firebase Deployment (Recommended)
+
+This project is configured for Firebase deployment with:
+- **Firebase Hosting** for the frontend
+- **Firebase Cloud Run** for the backend API
+- **Cloud SQL PostgreSQL** for the database (via Firebase Data Connect)
+
+#### Quick Start
+
+See [FIREBASE-QUICK-START.md](./FIREBASE-QUICK-START.md) for a quick deployment guide.
+
+#### Full Setup Guide
+
+See [FIREBASE-SETUP.md](./FIREBASE-SETUP.md) for detailed Firebase setup instructions.
+
+#### Deploy Command
+
+```bash
+./deploy-firebase.sh
+```
+
+### Alternative Deployment Options
+
+#### Frontend (Vercel)
 
 1. Connect your GitHub repository to Vercel
 2. Set environment variables in Vercel dashboard
 3. Deploy automatically on push to main
 
-### Backend (Railway/Render)
+#### Backend (Railway/Render)
 
 1. Connect your GitHub repository
 2. Set environment variables

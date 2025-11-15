@@ -9,6 +9,7 @@ jest.mock(
   const navigate = jest.fn();
   const noop: React.FC = ({ children }) => <>{children}</>;
   return {
+    BrowserRouter: ({ children }: { children: React.ReactNode }) => <div data-testid="router">{children}</div>,
     HashRouter: ({ children }: { children: React.ReactNode }) => <div data-testid="router">{children}</div>,
     Routes: ({ children }: { children: React.ReactNode }) => <div data-testid="routes">{children}</div>,
     Route: ({ element }: { element: React.ReactElement }) => element,
