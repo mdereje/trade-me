@@ -14,7 +14,7 @@ env:
   REGION: us-central1
   SERVICE_NAME: backend
   AR_REPO: trade-me
-  CLOUDSQL_INSTANCE: trade-me-13f73:us-central1:trade-me-db
+  CLOUDSQL_INSTANCE: trade-me-13f73:us-central1:quivo-db-instance
 
 jobs:
   deploy-backend:

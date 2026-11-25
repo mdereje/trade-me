@@ -10,7 +10,7 @@ NC='\033[0m'
 
 REGION="${REGION:-us-central1}"
 AR_REPO="${AR_REPO:-trade-me}"
-CLOUDSQL_INSTANCE_NAME="${CLOUDSQL_INSTANCE_NAME:-trade-me-db}"
+CLOUDSQL_INSTANCE_NAME="${CLOUDSQL_INSTANCE_NAME:-quivo-db-instance}"
 
 echo -e "${GREEN}Starting Trade Me Deployment${NC}"
 

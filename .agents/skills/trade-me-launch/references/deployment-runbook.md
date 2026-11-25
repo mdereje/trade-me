@@ -1,6 +1,6 @@
 # Trade Me — Deployment & Go-Live Runbook
 
-Target Firebase / GCP Project: **`trade-me-13f73`** · Region: **`us-central1`** · Cloud SQL Instance: **`trade-me-db`** · Cloud Run Service: **`backend`** · Live URL: **`https://trade-me-13f73.web.app`**
+Target Firebase / GCP Project: **`trade-me-13f73`** · Region: **`us-central1`** · Cloud SQL Instance: **`quivo-db-instance`** (database: **`trademe_app`**) · Cloud Run Service: **`backend`** · Live URL: **`https://trade-me-13f73.web.app`**
 
 ## 1. Mandatory Config & CI Fixes Before Deploying
 
