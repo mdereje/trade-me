@@ -1,19 +1,16 @@
 # Trade Me - Barter Platform
 
-A modern barter platform where users can trade everyday items without money exchange. Users pay a $1/week subscription and can trade items with others in their area.
+A modern local barter platform where users can trade everyday items without money exchange. Browsing and listing your first item are free; unlimited listings and trading are unlocked via a **$0.99/month** or **$10/year** Stripe membership.
 
 ## 🚀 Features
 
-- 🔐 **Social Media Authentication** - Google, Facebook, Twitter login
-- 📱 **Phone Verification** - SMS verification for security
-- 🏠 **Location-Based Trading** - Filter by zip code, city, or radius
-- 📸 **Multiple Photo Uploads** - Show your items with multiple photos
-- 🔄 **Smart Trading System** - Make offers, counter-offers, accept/reject
-- 📧 **Real-Time Notifications** - Get notified of trade offers and updates
+- 🔍 **Free Public Browsing** - Search by keyword, category, city, ZIP, or distance with zero login required
+- 🏠 **Location-Based Trading** - Filter by ZIP code, city, state, or radius
+- 📸 **Multiple Photo Uploads** - Upload up to 5 photos per item (Google Cloud Storage in production)
+- 🔄 **Smart Trading System** - Make offers, counter-offers, accept/reject, and complete swaps
 - ⭐ **Review System** - Rate and review completed trades
-- 💳 **Flexible Payments** - Stripe and PayPal subscription ($1/week)
-- 📱 **Responsive Design** - Beautiful, intuitive user experience
-- 🛡️ **Safe Trading** - User verification and review system
+- 💳 **Simple Stripe Membership** - Free to browse + 1 free item; $0.99/month or $10/year (save 16%) via Stripe Checkout & Billing Portal
+- 🛡️ **Safe & Private** - Public profiles strip email/phone PII while displaying verified ratings and completed trades
 
 ## 🛠️ Tech Stack
 
@@ -300,9 +297,11 @@ Once the backend is running, visit:
 
 #### Payments
 
-- `POST /api/payments/stripe/subscribe` - Create Stripe subscription
-- `POST /api/payments/paypal/subscribe` - Create PayPal subscription
-- `POST /api/payments/cancel` - Cancel subscription
+- `GET /api/payments/plans` - Public pricing plans ($0.99/mo & $10/yr)
+- `POST /api/payments/checkout` - Create Stripe Checkout Session
+- `POST /api/payments/portal` - Create Stripe Billing Portal Session
+- `GET /api/payments/status` - Get current subscription entitlement
+- `POST /api/payments/webhook/stripe` - Verified, idempotent Stripe webhook handler
 
 ## 🧪 Testing
 

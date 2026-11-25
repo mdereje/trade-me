@@ -26,10 +26,11 @@ def test_root_endpoint():
 
 
 def test_health_endpoint():
-    """Test the health check endpoint"""
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    """Test both /health and /api/health endpoints"""
+    for path in ("/health", "/api/health"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert response.json() == {"status": "healthy"}
 
 
 def test_cors_preflight():
@@ -58,9 +59,9 @@ def test_social_auth_fails_closed_when_unconfigured(monkeypatch):
     monkeypatch.delenv("TWITTER_CLIENT_ID", raising=False)
     monkeypatch.delenv("ALLOW_MOCK_SOCIAL_AUTH", raising=False)
 
-    assert client.post("/api/auth/google", params={"google_token": "fake"}).status_code == 401
-    assert client.post("/api/auth/facebook", params={"facebook_token": "fake"}).status_code == 401
-    assert client.post("/api/auth/twitter", params={"twitter_token": "fake"}).status_code == 401
+    assert client.post("/api/auth/google", json={"token": "fake"}).status_code == 401
+    assert client.post("/api/auth/facebook", json={"token": "fake"}).status_code == 401
+    assert client.post("/api/auth/twitter", json={"token": "fake"}).status_code == 401
 
 
 def test_public_user_profile_strips_private_pii():
@@ -81,7 +82,6 @@ def test_public_user_profile_strips_private_pii():
     user_id = reg.json()["user"]["id"]
     token = reg.json()["access_token"]
 
-    # Public endpoint omits email & phone_number
     public_resp = client.get(f"/api/users/{user_id}")
     assert public_resp.status_code == 200
     public_body = public_resp.json()
@@ -89,14 +89,12 @@ def test_public_user_profile_strips_private_pii():
     assert "email" not in public_body
     assert "phone_number" not in public_body
 
-    # Search endpoint omits email & phone_number
     search_resp = client.get("/api/users/", params={"q": "privacycheck"})
     assert search_resp.status_code == 200
     assert len(search_resp.json()) >= 1
     assert "email" not in search_resp.json()[0]
     assert "phone_number" not in search_resp.json()[0]
 
-    # /me endpoint still returns private fields to authenticated owner
     me_resp = client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
     assert me_resp.status_code == 200
     assert me_resp.json()["email"] == "privacycheck@example.com"

@@ -1,16 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '../types';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { authApi, paymentsApi, usersApi } from '../services/api';
+import { SubscriptionStatus, User } from '../types';
 
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-}
-
-interface RegisterData {
+export interface RegisterData {
   email: string;
   username: string;
   fullName: string;
@@ -19,6 +11,22 @@ interface RegisterData {
   zipCode?: string;
   city?: string;
   state?: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  subscription: SubscriptionStatus | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
+  refreshSubscription: () => Promise<SubscriptionStatus | null>;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  upgradeModalOpen: boolean;
+  upgradeModalMessage: string;
+  openUpgradeModal: (message?: string) => void;
+  closeUpgradeModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,122 +45,84 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalMessage, setUpgradeModalMessage] = useState('');
 
-  useEffect(() => {
-    // Check for stored auth token on mount
+  const refreshSubscription = useCallback(async (): Promise<SubscriptionStatus | null> => {
     const token = localStorage.getItem('authToken');
-    if (token) {
-      // Validate token and get user data
-      validateToken(token);
-    } else {
-      setIsLoading(false);
+    if (!token) {
+      setSubscription(null);
+      return null;
+    }
+    try {
+      const status = await paymentsApi.getStatus();
+      setSubscription(status);
+      return status;
+    } catch {
+      setSubscription(null);
+      return null;
     }
   }, []);
 
-  const API_BASE_URL =
-    process.env.REACT_APP_API_URL || 'http://localhost:8000';
-
-  const buildApiUrl = (path: string) => {
-    const base = API_BASE_URL.endsWith('/')
-      ? API_BASE_URL.slice(0, -1)
-      : API_BASE_URL;
-    return `${base}${path}`;
-  };
-
-  const validateToken = async (token: string) => {
-    try {
-      // TODO: Implement token validation with backend
-      // For now, just set loading to false
-      setIsLoading(false);
-    } catch (error) {
-      localStorage.removeItem('authToken');
-      setIsLoading(false);
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setUser(null);
+      setSubscription(null);
+      return;
     }
-  };
+    try {
+      const [me, sub] = await Promise.all([
+        usersApi.getMe(),
+        paymentsApi.getStatus().catch(() => null),
+      ]);
+      setUser(me);
+      setSubscription(sub);
+    } catch {
+      localStorage.removeItem('authToken');
+      setUser(null);
+      setSubscription(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const init = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        await refreshUser();
+      }
+      if (active) {
+        setIsLoading(false);
+      }
+    };
+    init();
+    return () => {
+      active = false;
+    };
+  }, [refreshUser]);
 
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // TODO: Implement login API call
-      const response = await fetch(buildApiUrl('/api/auth/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('authToken', data.access_token);
-        // TODO: Set user data from response
-        setUser({
-          id: 1,
-          email,
-          username: email.split('@')[0],
-          fullName: 'User',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        });
-      } else {
-        throw new Error('Login failed');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      const { accessToken, user: loggedInUser } = await authApi.login(email, password);
+      localStorage.setItem('authToken', accessToken);
+      setUser(loggedInUser);
+      await refreshSubscription();
     } finally {
       setIsLoading(false);
     }
   };
 
   const register = async (userData: RegisterData) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const payload = {
-        email: userData.email,
-        username: userData.username,
-        full_name: userData.fullName,
-        password: userData.password,
-        phone_number: userData.phoneNumber,
-        zip_code: userData.zipCode,
-        city: userData.city,
-        state: userData.state,
-      };
-      const response = await fetch(buildApiUrl('/api/auth/register'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('authToken', data.access_token);
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          username: data.user.username,
-          fullName: data.user.full_name,
-          phoneNumber: data.user.phone_number,
-          phoneVerified: data.user.phone_verified,
-          zipCode: data.user.zip_code,
-          city: data.user.city,
-          state: data.user.state,
-          bio: data.user.bio,
-          profilePicture: data.user.profile_picture,
-          isActive: data.user.is_active,
-          isVerified: data.user.is_verified,
-          createdAt: data.user.created_at,
-          lastLogin: data.user.last_login,
-        });
-      } else {
-        throw new Error('Registration failed');
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
+      const { accessToken, user: newUser } = await authApi.register(userData);
+      localStorage.setItem('authToken', accessToken);
+      setUser(newUser);
+      await refreshSubscription();
     } finally {
       setIsLoading(false);
     }
@@ -161,20 +131,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('authToken');
     setUser(null);
+    setSubscription(null);
   };
+
+  const openUpgradeModal = useCallback((message?: string) => {
+    setUpgradeModalMessage(
+      message ||
+        'Upgrade to a Trade Me Membership ($0.99/month or $10/year) to unlock unlimited listings and trading.'
+    );
+    setUpgradeModalOpen(true);
+  }, []);
+
+  const closeUpgradeModal = useCallback(() => {
+    setUpgradeModalOpen(false);
+  }, []);
 
   const value: AuthContextType = {
     user,
+    subscription,
     login,
     register,
     logout,
+    refreshUser,
+    refreshSubscription,
     isLoading,
     isAuthenticated: !!user,
+    upgradeModalOpen,
+    upgradeModalMessage,
+    openUpgradeModal,
+    closeUpgradeModal,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

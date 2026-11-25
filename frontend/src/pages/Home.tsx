@@ -1,14 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { 
-  ShoppingBagIcon, 
-  ArrowPathIcon, 
-  ShieldCheckIcon,
+import {
+  ArrowPathIcon,
   CurrencyDollarIcon,
   MapPinIcon,
-  StarIcon
+  ShieldCheckIcon,
+  ShoppingBagIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../contexts/AuthContext';
 
 const Home: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -24,32 +24,28 @@ const Home: React.FC = () => {
               <span className="text-primary-600"> Better Items</span>
             </h1>
             <p className="text-xl text-secondary-600 mb-8 max-w-3xl mx-auto">
-              Trade your everyday items with others in your community. 
-              No money needed - just find what you want and trade what you have.
+              Trade everyday items with neighbors in your community. No cash needed — browse
+              listings for free, find what you want, and swap what you have.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/items" className="btn-primary text-lg px-8 py-3">
+                Browse Items Free
+              </Link>
               {isAuthenticated ? (
-                <>
-                  <Link to="/dashboard" className="btn-primary text-lg px-8 py-3">
-                    Go to Dashboard
-                  </Link>
-                  <Link to="/items" className="btn-secondary text-lg px-8 py-3">
-                    Browse Items
-                  </Link>
-                </>
+                <Link to="/dashboard" className="btn-secondary text-lg px-8 py-3">
+                  Go to Dashboard
+                </Link>
               ) : (
-                <>
-                  <Link to="/register" className="btn-primary text-lg px-8 py-3">
-                    Get Started Free
-                  </Link>
-                  <Link to="/items" className="btn-secondary text-lg px-8 py-3">
-                    Browse Items
-                  </Link>
-                </>
+                <Link to="/register" className="btn-secondary text-lg px-8 py-3">
+                  Sign Up Free
+                </Link>
               )}
             </div>
             <p className="text-sm text-secondary-500 mt-4">
-              Only $1/week • Cancel anytime
+              Free to browse & list your first item • Unlimited trading for{' '}
+              <Link to="/pricing" className="text-primary-600 font-medium hover:underline">
+                $0.99/month or $10/year
+              </Link>
             </p>
           </div>
         </div>
@@ -63,7 +59,7 @@ const Home: React.FC = () => {
               Why Choose Trade Me?
             </h2>
             <p className="text-xl text-secondary-600 max-w-2xl mx-auto">
-              A modern platform designed for safe, easy, and fun trading experiences.
+              A modern barter platform designed for safe, local, money-free trading.
             </p>
           </div>
 
@@ -72,12 +68,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CurrencyDollarIcon className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                No Money Exchange
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">No Money Exchange</h3>
               <p className="text-secondary-600">
-                Trade items directly without any financial transactions. 
-                Just $1/week subscription to access the platform.
+                Swap items directly without negotiating prices. Browse free, and unlock unlimited
+                trading for $0.99/month or $10/year.
               </p>
             </div>
 
@@ -85,12 +79,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MapPinIcon className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                Local Trading
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">Local Trading</h3>
               <p className="text-secondary-600">
-                Find items in your area. Filter by zip code, city, or radius 
-                to discover nearby trading opportunities.
+                Discover items right in your neighborhood. Filter by ZIP code, city, state, or
+                category with zero sign-up required to browse.
               </p>
             </div>
 
@@ -98,12 +90,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShieldCheckIcon className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                Safe & Secure
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">Safe & Transparent</h3>
               <p className="text-secondary-600">
-                Social media authentication and phone verification ensure 
-                you're trading with real people in your community.
+                Private contact details stay protected while public profiles showcase verified trade
+                counts and community ratings.
               </p>
             </div>
 
@@ -111,12 +101,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ArrowPathIcon className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                Easy Trading
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">Easy Trading</h3>
               <p className="text-secondary-600">
-                Make offers, counter-offers, and negotiate trades directly 
-                through our intuitive platform.
+                Propose offers from your listed items, review incoming swaps, and track active
+                trades from offer to completion.
               </p>
             </div>
 
@@ -124,12 +112,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <StarIcon className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                Review System
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">Review System</h3>
               <p className="text-secondary-600">
-                Rate and review your trading experiences to build trust 
-                and help others make informed decisions.
+                Rate and review completed trades to build your local trading reputation and help
+                others trade with confidence.
               </p>
             </div>
 
@@ -137,12 +123,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShoppingBagIcon className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                Multiple Categories
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">Multiple Categories</h3>
               <p className="text-secondary-600">
-                From electronics to furniture, books to tools - 
-                find and trade items across all categories.
+                From electronics to furniture, books to tools and musical instruments — trade across
+                10 everyday categories.
               </p>
             </div>
           </div>
@@ -153,12 +137,8 @@ const Home: React.FC = () => {
       <section className="py-20 bg-secondary-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-4">
-              How It Works
-            </h2>
-            <p className="text-xl text-secondary-600">
-              Get started in just a few simple steps
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-4">How It Works</h2>
+            <p className="text-xl text-secondary-600">Get started in just three steps</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -166,11 +146,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                 1
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                Sign Up & Verify
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">Browse Free</h3>
               <p className="text-secondary-600">
-                Create your account with social media login and verify your phone number for security.
+                Explore items available in your area immediately — search by keyword, category, or
+                location.
               </p>
             </div>
 
@@ -178,12 +157,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                 2
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                List Your Items
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">List Your Items</h3>
               <p className="text-secondary-600">
-                Upload photos and details of items you want to trade. 
-                Set your location and browse items from others.
+                Create a free account and list your first item with photos. Upgrade for $0.99/mo or
+                $10/yr for unlimited listings and offers.
               </p>
             </div>
 
@@ -191,12 +168,10 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-primary-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                 3
               </div>
-              <h3 className="text-xl font-semibold text-secondary-900 mb-2">
-                Trade & Review
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary-900 mb-2">Trade & Review</h3>
               <p className="text-secondary-600">
-                Make offers, negotiate trades, and meet up to exchange items. 
-                Leave reviews to build your trading reputation.
+                Send offers, meet safely in public to exchange items, mark trades complete, and
+                leave a review.
               </p>
             </div>
           </div>
@@ -210,16 +185,23 @@ const Home: React.FC = () => {
             Ready to Start Trading?
           </h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of people already trading their way to better items.
+            Browse local items right now for free, or join with an annual membership for just
+            $10/year.
           </p>
-          {!isAuthenticated && (
-            <Link 
-              to="/register" 
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/items"
               className="bg-white text-primary-600 hover:bg-primary-50 font-medium py-3 px-8 rounded-lg transition-colors duration-200 text-lg"
             >
-              Get Started Free
+              Browse Items
             </Link>
-          )}
+            <Link
+              to="/pricing"
+              className="border border-white text-white hover:bg-primary-700 font-medium py-3 px-8 rounded-lg transition-colors duration-200 text-lg"
+            >
+              See Pricing ($0.99/mo · $10/yr)
+            </Link>
+          </div>
         </div>
       </section>
     </div>
