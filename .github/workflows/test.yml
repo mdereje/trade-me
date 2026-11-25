@@ -33,8 +33,10 @@ jobs:
 
       - name: Run backend tests
         working-directory: ./backend
-        run: |
-          pytest tests/ -v --tb=short || echo "Tests completed"
+        env:
+          ENV: test
+          SECRET_KEY: ci-test-secret-key-not-for-production
+        run: pytest tests/ -v --tb=short
 
   test-frontend:
     name: Test Frontend
@@ -47,18 +49,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
           cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install frontend dependencies
-        working-directory: ./frontend
+      - name: Install workspace dependencies
         run: npm ci
 
       - name: Run frontend tests
-        working-directory: ./frontend
-        run: npm test -- --watchAll=false --coverage --passWithNoTests
+        run: npm --workspace=frontend test -- --watchAll=false --passWithNoTests
 
       - name: Run frontend linter
-        working-directory: ./frontend
-        run: npm run lint || echo "Linting completed"
+        run: npm --workspace=frontend run lint

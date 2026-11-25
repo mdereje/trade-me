@@ -1,69 +1,87 @@
-import requests
+import logging
 import os
-from typing import Optional, Dict
+from typing import Dict, Optional
+import requests
+
+logger = logging.getLogger(__name__)
+
+
+def _mock_social_enabled() -> bool:
+    return (
+        os.getenv("ENV", "").lower() in ("development", "test")
+        and os.getenv("ALLOW_MOCK_SOCIAL_AUTH", "").lower() == "true"
+    )
 
 
 def verify_google_token(token: str) -> Optional[Dict]:
-    """Verify Google OAuth token and return user info"""
+    """Verify Google OAuth token and return user info."""
     try:
-        # For development, return mock data
         if not os.getenv("GOOGLE_CLIENT_ID"):
-            return {
-                "id": "mock_google_id",
-                "email": "user@gmail.com",
-                "name": "Mock User"
-            }
+            if _mock_social_enabled():
+                return {
+                    "id": "mock_google_id",
+                    "email": "user@gmail.com",
+                    "name": "Mock User",
+                }
+            logger.warning("Google OAuth attempted but GOOGLE_CLIENT_ID is not configured.")
+            return None
 
-        # In production, verify with Google API
         response = requests.get(
-            f"https://www.googleapis.com/oauth2/v2/userinfo?access_token={token}"
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
         )
         if response.status_code == 200:
             return response.json()
         return None
     except Exception as e:
-        print(f"Error verifying Google token: {e}")
+        logger.error("Error verifying Google token: %s", e)
         return None
 
 
 def verify_facebook_token(token: str) -> Optional[Dict]:
-    """Verify Facebook OAuth token and return user info"""
+    """Verify Facebook OAuth token and return user info."""
     try:
-        # For development, return mock data
         if not os.getenv("FACEBOOK_CLIENT_ID"):
-            return {
-                "id": "mock_facebook_id",
-                "email": "user@facebook.com",
-                "name": "Mock User"
-            }
+            if _mock_social_enabled():
+                return {
+                    "id": "mock_facebook_id",
+                    "email": "user@facebook.com",
+                    "name": "Mock User",
+                }
+            logger.warning("Facebook OAuth attempted but FACEBOOK_CLIENT_ID is not configured.")
+            return None
 
-        # In production, verify with Facebook API
         response = requests.get(
-            f"https://graph.facebook.com/me?access_token={token}&fields=id,name,email"
+            "https://graph.facebook.com/me",
+            params={"access_token": token, "fields": "id,name,email"},
+            timeout=10,
         )
         if response.status_code == 200:
             return response.json()
         return None
     except Exception as e:
-        print(f"Error verifying Facebook token: {e}")
+        logger.error("Error verifying Facebook token: %s", e)
         return None
 
 
 def verify_twitter_token(token: str) -> Optional[Dict]:
-    """Verify Twitter OAuth token and return user info"""
+    """Verify Twitter OAuth token and return user info."""
     try:
-        # For development, return mock data
         if not os.getenv("TWITTER_CLIENT_ID"):
-            return {
-                "id": "mock_twitter_id",
-                "email": "user@twitter.com",
-                "name": "Mock User",
-                "username": "mockuser"
-            }
+            if _mock_social_enabled():
+                return {
+                    "id": "mock_twitter_id",
+                    "email": "user@twitter.com",
+                    "name": "Mock User",
+                    "username": "mockuser",
+                }
+            logger.warning("Twitter OAuth attempted but TWITTER_CLIENT_ID is not configured.")
+            return None
 
-        # In production, verify with Twitter API
-        # This would require more complex OAuth 2.0 implementation
+        # Production Twitter OAuth 2.0 user lookup is not yet implemented; fail closed.
+        logger.warning("Twitter OAuth verification is not implemented in production.")
         return None
     except Exception as e:
-        print(f"Error verifying Twitter token: {e}")
+        logger.error("Error verifying Twitter token: %s", e)
         return None

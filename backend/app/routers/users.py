@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-from app.schemas.user import UserResponse, UserUpdate, UserProfile
+from app.schemas.user import UserResponse, UserUpdate, UserProfile, PublicUserProfile
 from app.services.user_service import UserService
 from app.utils.auth import get_current_user
 
@@ -30,14 +30,14 @@ async def update_current_user(
     return user_service.update_user(current_user.id, user_update)
 
 
-@router.get("/{user_id}", response_model=UserProfile)
+@router.get("/{user_id}", response_model=PublicUserProfile)
 async def get_user_profile(
     user_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get user profile by ID"""
+    """Get public user profile by ID (omits private email and phone)"""
     user_service = UserService(db)
-    user = user_service.get_user_profile(user_id)
+    user = user_service.get_public_user_profile(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -46,7 +46,7 @@ async def get_user_profile(
     return user
 
 
-@router.get("/", response_model=List[UserProfile])
+@router.get("/", response_model=List[PublicUserProfile])
 async def search_users(
     q: str = None,
     city: str = None,
@@ -55,6 +55,6 @@ async def search_users(
     offset: int = 0,
     db: Session = Depends(get_db)
 ):
-    """Search users by name, city, or state"""
+    """Search public user profiles by name, city, or state"""
     user_service = UserService(db)
     return user_service.search_users(q, city, state, limit, offset)
