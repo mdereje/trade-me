@@ -9,91 +9,49 @@ description: >-
 
 # Trade Me — Launch Runbook
 
-**Trade Me** is a local barter platform where users trade everyday items without exchanging money, funded by a membership subscription (**$0.99/month** or **$10/year**, replacing the prototype's `$1/week` placeholder).
+**Trade Me** is a local barter platform where users trade everyday items without exchanging money. Browsing and listing 1 active item are free; unlimited listings and trading require a **$0.99/month** or **$10/year** Stripe membership.
 
-- **Stack**: React 19 + TypeScript + Tailwind (`frontend/`) · FastAPI + SQLAlchemy + PostgreSQL (`backend/`)
-- **Target Infra**: Firebase Hosting (`trade-me-13f73`) + Cloud Run (`backend`, `us-central1`) + Cloud SQL PostgreSQL (`trade-me-db`) + Cloud Storage (item photos)
+- **Stack**: React 19 + TypeScript + Tailwind v3 (`frontend/`) · FastAPI + SQLAlchemy + Alembic + PostgreSQL (`backend/`)
+- **Target Infra**: Firebase Hosting (`trade-me-13f73`) + Cloud Run (`backend`, `us-central1`) + Cloud SQL PostgreSQL (`trade-me-db`) + Cloud Storage (`trade-me-13f73-uploads`)
 
 ## Current State Snapshot
 
-The repo is an **early prototype / UI scaffold** — not launch-ready. Core flows are mocked or disconnected.
+All application code, migrations, Stripe billing, public browsing, and deployment configs are implemented across PRs #1–#5. Only **external cloud & Stripe account provisioning** remains to go live.
 
-| Area | Status | Primary Gaps |
+| Area | Status | Details |
 | :--- | :--- | :--- |
-| Auth & Security | **Broken / Unsafe** | `.env.gcp` leaks credentials in git; mock OAuth logs anyone in when env vars unset; login expects query params instead of JSON; `validateToken` is a no-op |
-| Backend API & DB | **Partial / Buggy** | No Alembic migrations or category seed; Pydantic `dict` schemas clash with ORM objects; `TradeService` sets `item_owner_id=item_id` and assigns raw strings to Enums; photo upload & user stats are stubs |
-| Billing ($0.99/mo & $10/yr) | **Mocked** | `PaymentService` inserts fake rows; webhooks unverified; hardcoded `$1/week`; zero subscription gating on endpoints |
-| Frontend Pages | **UI Mockup** | Only `/register` calls the real API; `Dashboard`, `Items`, `ItemDetail`, `CreateItem`, `Trades`, `Profile` use hardcoded mocks or no-op buttons; no `src/services/` API layer or pricing/checkout UI |
-| Infra & CI/CD | **Misconfigured** | `firebase.json` matches `**` before `/api/**`; prod `REACT_APP_API_URL=/api` causes `/api/api/...` double prefix; `test.yml` swallows pytest/lint failures; local photo disk is ephemeral on Cloud Run |
+| Auth & Security | **Ready (PR #1)** | `.env.gcp` purged; fail-closed `SECRET_KEY` & social OAuth; public profiles strip email/phone PII; CI enforces tests & lint |
+| Backend API & DB | **Ready (PR #2)** | Alembic `0001`+`0002` + 10 seeded categories; JSON login; typed Pydantic v2 schemas; fixed `TradeService` & `ReviewService`; real `UserService` stats; GCS/local photo uploads; DB-backed SMS codes |
+| Billing ($0.99/mo & $10/yr) | **Ready (PR #3)** | Stripe Checkout + Billing Portal + verified/idempotent webhooks; browse & 1st listing free; HTTP `402` gating on trade offers & listing #2+ |
+| Frontend & Public Browsing | **Ready (PR #4)** | Centralized `api.ts`; live public `/items` + `/items/:id` browsing; wired `Dashboard`, `CreateItem`, `Trades`, `Profile`; `/pricing`, `/billing/success`, `/billing/cancel`, `UpgradeModal`, `/terms`, `/privacy`, `/safety` |
+| Infra & CI/CD | **Code Ready (PR #5) · Awaiting Cloud Setup** | Fixed `firebase.json` rewrite order, `/api` prefix, Artifact Registry, Cloud Run migration job, `deploy-firebase.sh`; awaiting user setup of GCP/Firebase secrets, Cloud SQL/Storage, Stripe Product/Prices/Webhook, and GitHub Secrets |
 
 ## Disclosed References
 
-Read the matching reference before editing code in that domain:
+Read the matching reference before executing tasks in that domain:
 
-- **Bug, security, and mock inventory** → [`references/current-state-audit.md`](./references/current-state-audit.md) — read before fixing backend/frontend defects or wiring pages.
-- **$0.99/mo & $10/yr Stripe billing architecture** → [`references/billing-architecture.md`](./references/billing-architecture.md) — read before implementing payments, webhooks, paywall gating, or pricing UI.
-- **Firebase/Cloud Run deployment & go-live checklist** → [`references/deployment-runbook.md`](./references/deployment-runbook.md) — read before fixing hosting rewrites, CI/CD, secrets, storage, or deploying live.
+- **Remaining setup & audit history** → [`references/current-state-audit.md`](./references/current-state-audit.md)
+- **$0.99/mo & $10/yr Stripe billing architecture** → [`references/billing-architecture.md`](./references/billing-architecture.md)
+- **Firebase/Cloud Run provisioning & go-live smoke checklist** → [`references/deployment-runbook.md`](./references/deployment-runbook.md)
 
-## Launch Execution Phases
+## Remaining Go-Live Steps (Human Account Setup + Smoke Check)
 
-Work through phases in order. Keep each phase's completion criterion satisfied before moving on, and update the snapshot above plus `references/current-state-audit.md` as blockers close so this skill stays current.
+Read [`references/deployment-runbook.md`](./references/deployment-runbook.md) before running provisioning commands.
 
-### Phase 1 — Security & Repo Hygiene
+1. **Rotate Leaked Credentials**: Rotate the old `DB_PASSWORD` and `SECRET_KEY` that previously lived in `.env.gcp` if reused anywhere.
+2. **Provision GCP Resources on `trade-me-13f73`**:
+   - Create Artifact Registry Docker repo `trade-me` in `us-central1`.
+   - Create Cloud SQL PostgreSQL instance `trade-me-db` (or confirm whether to reuse existing `quivo-db-instance` on `trade-me-13f73`), database `trademe`, and user `trademe_user`.
+   - Create Cloud Storage bucket `gs://trade-me-13f73-uploads` with public read + Cloud Run SA `roles/storage.objectAdmin`.
+3. **Configure Stripe (Test first, then Live)**:
+   - Create Product **Trade Me Membership** with two recurring USD Prices: `$0.99/month` and `$10.00/year`.
+   - Enable Stripe Customer Portal (plan switching + cancel at period end).
+   - Register webhook endpoint `https://trade-me-13f73.web.app/api/payments/webhook/stripe` for `checkout.session.completed`, `customer.subscription.{created,updated,deleted}`, `invoice.paid`, `invoice.payment_failed`.
+4. **Add Secrets**:
+   - **GCP Secret Manager**: `database-url`, `secret-key`, `stripe-secret-key`, `stripe-webhook-secret` (grant `roles/secretmanager.secretAccessor` to Cloud Run runtime SA).
+   - **GitHub Repo Secrets**: `FIREBASE_SA_KEY`, `REACT_APP_STRIPE_PUBLISHABLE_KEY`.
+   - **GitHub Repo Variables**: `STRIPE_PRICE_MONTHLY_ID`, `STRIPE_PRICE_ANNUAL_ID`.
+5. **Merge PRs #1 → #5 into `main`** (triggers automated `deploy-backend.yml` migration + deploy and `deploy-frontend.yml` Hosting deploy).
+6. **Verify Live**: Run every check in the Go-Live Smoke Verification Checklist in [`references/deployment-runbook.md`](./references/deployment-runbook.md).
 
-Read [`references/current-state-audit.md`](./references/current-state-audit.md) (Security section).
-
-1. Rotate exposed `DB_PASSWORD` and `SECRET_KEY` from `.env.gcp`, remove `.env.gcp` from git tracking, and add `.env.*` to `.gitignore`.
-2. Fail closed on startup if `SECRET_KEY` is missing/default outside tests; remove development mock fallbacks from `backend/app/utils/social_auth.py` (gate behind explicit `ENV=development` or disable unconfigured providers with HTTP 501).
-3. Remove `|| echo` failure-swallowing in `.github/workflows/test.yml` so CI blocks on failing tests and lint errors.
-4. Strip private fields (`email`, `phone_number`) from public `UserProfile` responses (`GET /api/users/{user_id}` and `GET /api/users/`).
-
-**Done when**: No secrets remain in git history/working tree, unconfigured OAuth/JWT fail closed, public user endpoints omit PII, and CI fails red on broken tests.
-
-### Phase 2 — Backend Core, Migrations & Media Storage
-
-Read [`references/current-state-audit.md`](./references/current-state-audit.md) (Backend section).
-
-1. Initialize Alembic (`backend/alembic.ini`, `backend/alembic/`) with an initial migration covering all tables plus a seed migration for `item_categories` (Electronics, Furniture, Books, Clothing, Tools, Sports, Home & Garden, Other). Replace import-time `Base.metadata.create_all` in production paths.
-2. Fix auth contracts: change `POST /api/auth/login` to accept a JSON `LoginRequest` body, return `{access_token, token_type, user}`, guard `password_hash is None` on social accounts, and return HTTP 400 on duplicate `username` or `phone_number`.
-3. Fix Pydantic response schemas (`ItemResponse`, `TradeOfferResponse`, `TradeResponse`, `ReviewResponse`) to use typed nested summary schemas instead of `dict` so SQLAlchemy ORM objects serialize cleanly.
-4. Fix `TradeService`: resolve `item_owner_id` from `Item.owner_id`, validate ownership of `offered_item_id`, block self-trades, use `TradeStatus`/`TradeOfferStatus` enum values consistently, and mark both items `ItemStatus.TRADED` on trade completion.
-5. Implement real aggregate queries in `UserService.get_user_profile`, real validation in `ReviewService` (completed trade participant, rating 1–5, one review per participant per trade), and geographic filtering (`latitude`/`longitude`/`radius` Haversine) in `ItemService.get_items`.
-6. Implement real photo uploads in `ItemService.upload_photos` backed by Google Cloud Storage / Firebase Storage (validate MIME type & size, persist `ItemPhoto` records, return public/signed URLs) rather than ephemeral Cloud Run local disk.
-7. Move SMS verification codes out of process memory (`phone_verification.py`) into PostgreSQL (with expiry + attempt limits + rate limit) or disable phone verification until Twilio is provisioned.
-
-**Done when**: `pytest` covers auth, items, photo uploads, offers/counter-offers/trades, reviews, and user profiles end-to-end against a clean migrated database with zero 500s or Pydantic validation errors.
-
-### Phase 3 — Stripe Subscriptions ($0.99/mo & $10/yr)
-
-Read [`references/billing-architecture.md`](./references/billing-architecture.md) in full before writing code.
-
-1. Create Alembic migration updating `subscriptions` (`plan_type`, `stripe_price_id`, `current_period_start`, `current_period_end`, `cancel_at_period_end`, `trial_end`, `TRIALING` status), adding `stripe_customer_id` to `users`, and adding `webhook_events` for idempotency.
-2. Implement Stripe Checkout Sessions (`POST /api/payments/checkout`), Stripe Customer Portal (`POST /api/payments/portal`), and live status (`GET /api/payments/status`) supporting `monthly` ($0.99/mo) and `annual` ($10/yr) Price IDs. Defer PayPal for MVP launch.
-3. Replace mocked `/api/payments/webhook/stripe` with raw-body `stripe.Webhook.construct_event` signature verification and idempotent event handling (`checkout.session.completed`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`).
-4. Add FastAPI dependency `require_active_subscription` (returns HTTP `402 Payment Required`) and apply it to gated actions (creating listings beyond free limit, making/accepting trade offers, contacting owners) while keeping item browsing free.
-
-**Done when**: Stripe CLI webhook replay tests verify checkout → active entitlement → gated action allowed → payment failure/cancellation → HTTP 402 enforcement, and duplicate webhooks are idempotent.
-
-### Phase 4 — Frontend Wiring, Cleanup & Pricing UX
-
-Read [`references/current-state-audit.md`](./references/current-state-audit.md) (Frontend section) and [`references/billing-architecture.md`](./references/billing-architecture.md) (Frontend UX section).
-
-1. Fix dependency/script mismatches: align Tailwind config/version (`tailwindcss` v4 vs CRA v3 setup), remove conflicting `@types/react-router-dom` v5, and add `"dev": "react-scripts start"` in `frontend/package.json` (or fix root `package.json`).
-2. Create `frontend/src/services/api.ts` (Axios/fetch client with Bearer token interceptor, single `/api` base handling, snake_case/camelCase mapping, and `402` paywall handling).
-3. Fix `AuthContext.tsx`: implement real `validateToken` via `GET /api/users/me`, remove hardcoded fake user in `login`, and expose `subscription` state. Hide or wire unimplemented social login buttons and "Forgot password".
-4. Wire every page to real APIs via React Query: `Items` (search/category/location filters), `ItemDetail` (real data + Make Trade Offer modal), `CreateItem` (create item + multipart photo upload), `Dashboard` (real stats & recent activity), `Trades` (real offers/trades + Accept/Reject/Counter/Complete/Cancel + Leave Review modal), `Profile` (real edit form, reviews, subscription status + Manage Billing portal button).
-5. Build `/pricing` (and paywall prompt modal) showcasing **$10/year (Best Value — Save 16%)** alongside **$0.99/month**, checkout return/cancel views, and replace all `$1/week` copy (`Home.tsx`, `Footer.tsx`, `Profile.tsx`, `README.md`).
-
-**Done when**: `npm run build`, `npm run lint`, and `npm test` pass cleanly, and a user can register, browse, subscribe via Stripe test mode, list an item with photos, trade, and leave a review with zero mock data left on screen.
-
-### Phase 5 — Infrastructure & Live Launch
-
-Read [`references/deployment-runbook.md`](./references/deployment-runbook.md) in full before running deploy commands.
-
-1. Fix `firebase.json` rewrite order (`/api/**` BEFORE `**`) and fix the double `/api/api/...` prefix between `deploy-frontend.yml` (`REACT_APP_API_URL=""` when using relative `/api/...` paths) and `api.ts`.
-2. Fix `deploy-firebase.sh` (add `--add-cloudsql-instances`, `FIREBASE_PROJECT_ID`, Stripe/GCS secrets, Artifact Registry image path) and prune obsolete GCP config files (`cloudbuild.yaml`, `app.yaml`, `service.yaml`, `firebase-data-connect-config.yaml`).
-3. Provision production resources on `trade-me-13f73`: Cloud SQL (`trade-me-db`), GCS bucket for uploads, Secret Manager secrets (`database-url`, `secret-key`, `stripe-secret-key`, `stripe-webhook-secret`, `stripe-price-monthly`, `stripe-price-annual`), and GitHub Actions secrets.
-4. Run Alembic migrations + category seed against production Cloud SQL, deploy backend to Cloud Run and frontend to Firebase Hosting, and register the live Stripe webhook URL (`https://trade-me-13f73.web.app/api/payments/webhook/stripe`).
-5. Execute the end-to-end production smoke checklist in [`references/deployment-runbook.md`](./references/deployment-runbook.md).
-
-**Done when**: Live `https://trade-me-13f73.web.app` passes every smoke check (health, auth, item+photo upload, live/test $0.99 & $10 Stripe checkout + webhook, trade lifecycle, billing portal) with clean Cloud Run logs.
+**Done when**: Live `https://trade-me-13f73.web.app` passes all smoke checks (health, public browse, auth, photo upload, Stripe checkout + webhook, trade lifecycle, billing portal) with clean Cloud Run logs.
