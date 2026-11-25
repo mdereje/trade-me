@@ -49,3 +49,23 @@ class UserProfile(UserResponse):
     trades_completed: int = 0
     average_rating: Optional[float] = None
     reviews_count: int = 0
+
+
+class PublicUserProfile(BaseModel):
+    """Public-facing trader profile with private PII (email, phone) stripped."""
+    id: int
+    username: str
+    full_name: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    bio: Optional[str] = None
+    profile_picture: Optional[str] = None
+    is_verified: bool = False
+    created_at: datetime
+    items_count: int = 0
+    trades_completed: int = 0
+    average_rating: Optional[float] = None
+    reviews_count: int = 0
+
+    class Config:
+        from_attributes = True

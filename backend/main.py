@@ -6,9 +6,13 @@ from dotenv import load_dotenv
 
 from app.database import engine, Base
 from app.routers import auth, items, trades, users, payments, reviews
+from app.utils.security import validate_security_config
 
 # Load environment variables
 load_dotenv()
+
+# Validate security configuration (fails closed if SECRET_KEY unset in production)
+validate_security_config()
 
 # Create database tables
 Base.metadata.create_all(bind=engine)

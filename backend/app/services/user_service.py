@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.models.user import User
-from app.schemas.user import UserUpdate, UserProfile
+from app.schemas.user import UserUpdate, UserProfile, PublicUserProfile
 from typing import List, Optional
 
 
@@ -46,13 +46,34 @@ class UserService:
             reviews_count=0
         )
 
+    def get_public_user_profile(self, user_id: int) -> Optional[PublicUserProfile]:
+        """Get public-safe user profile without private PII."""
+        profile = self.get_user_profile(user_id)
+        if not profile:
+            return None
+        return PublicUserProfile(
+            id=profile.id,
+            username=profile.username,
+            full_name=profile.full_name,
+            city=profile.city,
+            state=profile.state,
+            bio=profile.bio,
+            profile_picture=profile.profile_picture,
+            is_verified=profile.is_verified,
+            created_at=profile.created_at,
+            items_count=profile.items_count,
+            trades_completed=profile.trades_completed,
+            average_rating=profile.average_rating,
+            reviews_count=profile.reviews_count,
+        )
+
     def update_user(self, user_id: int, user_update: UserUpdate) -> Optional[User]:
         """Update user profile"""
         user = self.get_user_by_id(user_id)
         if not user:
             return None
 
-        update_data = user_update.dict(exclude_unset=True)
+        update_data = user_update.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(user, field, value)
 
@@ -61,9 +82,9 @@ class UserService:
         return user
 
     def search_users(self, q: str = None, city: str = None, state: str = None,
-                     limit: int = 20, offset: int = 0) -> List[UserProfile]:
-        """Search users"""
-        query = self.db.query(User)
+                     limit: int = 20, offset: int = 0) -> List[PublicUserProfile]:
+        """Search public user profiles"""
+        query = self.db.query(User).filter(User.is_active == True)
 
         if q:
             query = query.filter(
@@ -80,4 +101,5 @@ class UserService:
             query = query.filter(User.state.ilike(f"%{state}%"))
 
         users = query.offset(offset).limit(limit).all()
-        return [self.get_user_profile(user.id) for user in users if user]
+        profiles = [self.get_public_user_profile(user.id) for user in users if user]
+        return [p for p in profiles if p is not None]
