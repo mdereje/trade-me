@@ -2,6 +2,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models.item import Item, ItemStatus
+from app.models.subscription import Subscription
 from app.schemas.item import (
     ItemCategoryResponse,
     ItemCreate,
@@ -10,6 +12,7 @@ from app.schemas.item import (
     ItemUpdate,
 )
 from app.services.item_service import ItemService
+from app.services.payment_service import FREE_ACTIVE_LISTING_LIMIT, is_subscription_active
 from app.utils.auth import get_current_user
 
 router = APIRouter()
@@ -42,7 +45,27 @@ async def create_item(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Create a new item."""
+    """Create a new item (first active item is free; additional items require membership)."""
+    active_count = (
+        db.query(Item)
+        .filter(Item.owner_id == current_user.id, Item.status == ItemStatus.ACTIVE)
+        .count()
+    )
+    if active_count >= FREE_ACTIVE_LISTING_LIMIT:
+        sub = (
+            db.query(Subscription)
+            .filter(Subscription.user_id == current_user.id)
+            .first()
+        )
+        if not is_subscription_active(sub):
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={
+                    "code": "SUBSCRIPTION_REQUIRED",
+                    "message": "Free accounts can list 1 active item. Upgrade to Trade Me Membership ($0.99/month or $10/year) for unlimited listings and trading.",
+                    "pricing_url": "/pricing",
+                },
+            )
     item_service = ItemService(db)
     return item_service.create_item(item_data, current_user.id)
 

@@ -1,104 +1,60 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, Request
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.database import get_db
-from app.schemas.subscription import SubscriptionCreate, SubscriptionResponse
+from app.schemas.subscription import (
+    CheckoutRequest,
+    CheckoutResponse,
+    PlansResponse,
+    PortalResponse,
+    SubscriptionStatusResponse,
+)
 from app.services.payment_service import PaymentService
 from app.utils.auth import get_current_user
 
 router = APIRouter()
 
 
-@router.post("/stripe/subscribe", response_model=SubscriptionResponse)
-async def create_stripe_subscription(
+@router.get("/plans", response_model=PlansResponse)
+async def get_plans(db: Session = Depends(get_db)):
+    """Public endpoint returning Trade Me membership plans ($0.99/mo & $10/yr)."""
+    return PaymentService(db).get_plans()
+
+
+@router.post("/checkout", response_model=CheckoutResponse)
+async def create_checkout_session(
+    payload: CheckoutRequest,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Create a Stripe subscription"""
-    payment_service = PaymentService(db)
-    subscription = payment_service.create_stripe_subscription(current_user.id)
-    if not subscription:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to create subscription"
-        )
-    return subscription
+    """Create a Stripe Checkout Session for the chosen plan."""
+    return PaymentService(db).create_checkout_session(current_user, payload.plan)
 
 
-@router.post("/paypal/subscribe", response_model=SubscriptionResponse)
-async def create_paypal_subscription(
+@router.post("/portal", response_model=PortalResponse)
+async def create_billing_portal(
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Create a PayPal subscription"""
-    payment_service = PaymentService(db)
-    subscription = payment_service.create_paypal_subscription(current_user.id)
-    if not subscription:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to create subscription"
-        )
-    return subscription
+    """Create a Stripe Billing Portal session for managing or canceling membership."""
+    return PaymentService(db).create_portal_session(current_user)
 
 
-@router.post("/cancel")
-async def cancel_subscription(
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Cancel current subscription"""
-    payment_service = PaymentService(db)
-    success = payment_service.cancel_subscription(current_user.id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No active subscription found"
-        )
-    return {"message": "Subscription cancelled successfully"}
-
-
-@router.get("/status", response_model=SubscriptionResponse)
+@router.get("/status", response_model=SubscriptionStatusResponse)
 async def get_subscription_status(
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Get current subscription status"""
-    payment_service = PaymentService(db)
-    subscription = payment_service.get_subscription(current_user.id)
-    if not subscription:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No subscription found"
-        )
-    return subscription
+    """Get normalized subscription entitlement status for the authenticated user."""
+    return PaymentService(db).get_subscription_status(current_user.id)
 
 
 @router.post("/webhook/stripe")
 async def stripe_webhook(
-    request: dict,
-    db: Session = Depends(get_db)
+    request: Request,
+    stripe_signature: Optional[str] = Header(default=None, alias="Stripe-Signature"),
+    db: Session = Depends(get_db),
 ):
-    """Handle Stripe webhooks"""
-    payment_service = PaymentService(db)
-    result = payment_service.handle_stripe_webhook(request)
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid webhook"
-        )
-    return {"status": "success"}
-
-
-@router.post("/webhook/paypal")
-async def paypal_webhook(
-    request: dict,
-    db: Session = Depends(get_db)
-):
-    """Handle PayPal webhooks"""
-    payment_service = PaymentService(db)
-    result = payment_service.handle_paypal_webhook(request)
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid webhook"
-        )
-    return {"status": "success"}
+    """Verify and process incoming Stripe webhook events (raw body required)."""
+    raw_body = await request.body()
+    return PaymentService(db).handle_stripe_webhook(raw_body, stripe_signature)

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.trade import TradeOfferCreate, TradeOfferResponse, TradeResponse
 from app.services.trade_service import TradeService
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_user, require_active_subscription
 
 router = APIRouter()
 
@@ -12,10 +12,10 @@ router = APIRouter()
 @router.post("/offers", response_model=TradeOfferResponse)
 async def create_trade_offer(
     offer_data: TradeOfferCreate,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_active_subscription),
     db: Session = Depends(get_db),
 ):
-    """Create a trade offer."""
+    """Create a trade offer (requires active membership)."""
     trade_service = TradeService(db)
     return trade_service.create_trade_offer(offer_data, current_user.id)
 
@@ -43,10 +43,10 @@ async def get_made_offers(
 @router.post("/offers/{offer_id}/accept", response_model=TradeResponse)
 async def accept_trade_offer(
     offer_id: int,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_active_subscription),
     db: Session = Depends(get_db),
 ):
-    """Accept a trade offer."""
+    """Accept a trade offer (requires active membership)."""
     trade_service = TradeService(db)
     trade = trade_service.accept_trade_offer(offer_id, current_user.id)
     if not trade:
@@ -78,10 +78,10 @@ async def reject_trade_offer(
 async def counter_trade_offer(
     offer_id: int,
     counter_offer: TradeOfferCreate,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_active_subscription),
     db: Session = Depends(get_db),
 ):
-    """Create a counter offer."""
+    """Create a counter offer (requires active membership)."""
     trade_service = TradeService(db)
     return trade_service.create_counter_offer(offer_id, counter_offer, current_user.id)
 

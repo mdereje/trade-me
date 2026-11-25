@@ -7,10 +7,35 @@ os.environ["ENV"] = "test"
 os.environ["SECRET_KEY"] = "test-secret-key-for-pytest"
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient  # noqa: E402
 from main import app  # noqa: E402
+from app.database import SessionLocal  # noqa: E402
+from app.models.subscription import PaymentProvider, Subscription, SubscriptionStatus  # noqa: E402
 
 client = TestClient(app)
+
+
+def _grant_membership(user_id: int):
+    db = SessionLocal()
+    try:
+        sub = Subscription(
+            user_id=user_id,
+            status=SubscriptionStatus.ACTIVE,
+            payment_provider=PaymentProvider.STRIPE,
+            provider_subscription_id=f"sub_test_{user_id}",
+            provider_customer_id=f"cus_test_{user_id}",
+            plan_type="annual",
+            billing_cycle="annual",
+            amount_cents=1000,
+            amount=10.0,
+            currency="USD",
+            current_period_end=datetime.now(timezone.utc) + timedelta(days=365),
+        )
+        db.add(sub)
+        db.commit()
+    finally:
+        db.close()
 
 
 def _register_user(email: str, username: str, full_name: str, city: str = "Austin", state: str = "TX"):
@@ -87,9 +112,11 @@ def test_public_browse_items_photos_trades_and_reviews(tmp_path, monkeypatch):
     electronics_id = cats[0]["id"]
     furniture_id = cats[1]["id"]
 
-    # Register two traders
+    # Register two traders and grant active memberships for trade lifecycle testing
     u1 = _register_user("trader1@example.com", "trader1", "Trader One", "Austin", "TX")
     u2 = _register_user("trader2@example.com", "trader2", "Trader Two", "Denver", "CO")
+    _grant_membership(u1["user"]["id"])
+    _grant_membership(u2["user"]["id"])
     h1 = {"Authorization": f"Bearer {u1['access_token']}"}
     h2 = {"Authorization": f"Bearer {u2['access_token']}"}
 
