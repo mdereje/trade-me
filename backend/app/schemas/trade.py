@@ -1,6 +1,9 @@
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from app.schemas.item import ItemSummary
+from app.schemas.user import UserSummary
 
 
 class TradeOfferBase(BaseModel):
@@ -15,6 +18,8 @@ class TradeOfferCreate(TradeOfferBase):
 
 
 class TradeOfferResponse(TradeOfferBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     status: str
     item_id: int
@@ -26,18 +31,21 @@ class TradeOfferResponse(TradeOfferBase):
     created_at: datetime
     responded_at: Optional[datetime] = None
 
-    # Related objects
-    item: dict  # Basic item info
-    offered_item: dict  # Basic item info
-    offerer: dict  # Basic user info
-    item_owner: dict  # Basic user info
-    counter_offers: List['TradeOfferResponse'] = []
+    item: ItemSummary
+    offered_item: ItemSummary
+    offerer: UserSummary
+    item_owner: UserSummary
+    counter_offers: List["TradeOfferResponse"] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
+    @field_validator("status", mode="before")
+    @classmethod
+    def coerce_status(cls, v):
+        return v.value if isinstance(v, Enum) else v
 
 
 class TradeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     status: str
     item1_id: int
@@ -51,11 +59,15 @@ class TradeResponse(BaseModel):
     updated_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
-    # Related objects
-    item1: dict  # Basic item info
-    item2: dict  # Basic item info
-    user1: dict  # Basic user info
-    user2: dict  # Basic user info
+    item1: ItemSummary
+    item2: ItemSummary
+    user1: UserSummary
+    user2: UserSummary
 
-    class Config:
-        from_attributes = True
+    @field_validator("status", mode="before")
+    @classmethod
+    def coerce_status(cls, v):
+        return v.value if isinstance(v, Enum) else v
+
+
+TradeOfferResponse.model_rebuild()

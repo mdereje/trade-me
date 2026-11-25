@@ -1,48 +1,92 @@
+from datetime import datetime, timedelta, timezone
+import logging
 import os
-from twilio.rest import Client
-import random
+import secrets
 import string
+from sqlalchemy.orm import Session
+from twilio.rest import Client
+from app.models.phone_verification import PhoneVerificationCode
 
-# Twilio configuration
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+logger = logging.getLogger(__name__)
 
-# In-memory storage for verification codes (use Redis in production)
-verification_codes = {}
+CODE_TTL_MINUTES = 10
+MAX_VERIFICATION_ATTEMPTS = 5
 
 
-def send_verification_sms(phone_number: str) -> bool:
-    """Send SMS verification code"""
-    try:
-        if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER]):
-            # For development, just store a mock code
-            code = ''.join(random.choices(string.digits, k=6))
-            verification_codes[phone_number] = code
-            print(
-                f"Mock SMS sent to {phone_number}: Your verification code is {code}")
+def _generate_code() -> str:
+    return "".join(secrets.choice(string.digits) for _ in range(6))
+
+
+def send_verification_sms(phone_number: str, db: Session) -> bool:
+    """Generate, persist, and send an SMS verification code."""
+    twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_from = os.getenv("TWILIO_PHONE_NUMBER")
+    env = os.getenv("ENV", "").lower()
+
+    code = _generate_code()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=CODE_TTL_MINUTES)
+
+    # Replace any previous pending code for this phone number
+    db.query(PhoneVerificationCode).filter(
+        PhoneVerificationCode.phone_number == phone_number
+    ).delete()
+    db.add(
+        PhoneVerificationCode(
+            phone_number=phone_number,
+            code=code,
+            attempts=0,
+            expires_at=expires_at,
+        )
+    )
+    db.commit()
+
+    if not all([twilio_sid, twilio_token, twilio_from]):
+        if env in ("development", "test"):
+            logger.info("Dev SMS verification code generated for %s", phone_number)
             return True
+        logger.warning("Twilio is not configured in production; cannot send SMS.")
+        return False
 
-        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-        code = ''.join(random.choices(string.digits, k=6))
-        verification_codes[phone_number] = code
-
-        message = client.messages.create(
+    try:
+        client = Client(twilio_sid, twilio_token)
+        client.messages.create(
             body=f"Your Trade Me verification code is: {code}",
-            from_=TWILIO_PHONE_NUMBER,
-            to=phone_number
+            from_=twilio_from,
+            to=phone_number,
         )
         return True
     except Exception as e:
-        print(f"Error sending SMS: {e}")
+        logger.error("Error sending SMS via Twilio: %s", e)
         return False
 
 
-def verify_sms_code(phone_number: str, code: str) -> bool:
-    """Verify SMS code"""
-    stored_code = verification_codes.get(phone_number)
-    if stored_code and stored_code == code:
-        # Remove code after successful verification
-        del verification_codes[phone_number]
+def verify_sms_code(phone_number: str, code: str, db: Session) -> bool:
+    """Verify a stored SMS code with expiry and brute-force attempt limits."""
+    record = (
+        db.query(PhoneVerificationCode)
+        .filter(PhoneVerificationCode.phone_number == phone_number)
+        .order_by(PhoneVerificationCode.created_at.desc())
+        .first()
+    )
+    if not record:
+        return False
+
+    now = datetime.now(timezone.utc)
+    expires_at = record.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if now > expires_at or record.attempts >= MAX_VERIFICATION_ATTEMPTS:
+        db.delete(record)
+        db.commit()
+        return False
+
+    if secrets.compare_digest(record.code, code):
+        db.delete(record)
+        db.commit()
         return True
+
+    record.attempts += 1
+    db.commit()
     return False

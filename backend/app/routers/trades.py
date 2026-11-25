@@ -1,6 +1,6 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
 from app.database import get_db
 from app.schemas.trade import TradeOfferCreate, TradeOfferResponse, TradeResponse
 from app.services.trade_service import TradeService
@@ -13,9 +13,9 @@ router = APIRouter()
 async def create_trade_offer(
     offer_data: TradeOfferCreate,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Create a trade offer"""
+    """Create a trade offer."""
     trade_service = TradeService(db)
     return trade_service.create_trade_offer(offer_data, current_user.id)
 
@@ -23,9 +23,9 @@ async def create_trade_offer(
 @router.get("/offers/received", response_model=List[TradeOfferResponse])
 async def get_received_offers(
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Get trade offers received by current user"""
+    """Get trade offers received by current user."""
     trade_service = TradeService(db)
     return trade_service.get_received_offers(current_user.id)
 
@@ -33,9 +33,9 @@ async def get_received_offers(
 @router.get("/offers/made", response_model=List[TradeOfferResponse])
 async def get_made_offers(
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Get trade offers made by current user"""
+    """Get trade offers made by current user."""
     trade_service = TradeService(db)
     return trade_service.get_made_offers(current_user.id)
 
@@ -44,15 +44,15 @@ async def get_made_offers(
 async def accept_trade_offer(
     offer_id: int,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Accept a trade offer"""
+    """Accept a trade offer."""
     trade_service = TradeService(db)
     trade = trade_service.accept_trade_offer(offer_id, current_user.id)
     if not trade:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Trade offer not found or not authorized"
+            detail="Trade offer not found or not authorized",
         )
     return trade
 
@@ -61,15 +61,15 @@ async def accept_trade_offer(
 async def reject_trade_offer(
     offer_id: int,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Reject a trade offer"""
+    """Reject a trade offer."""
     trade_service = TradeService(db)
     success = trade_service.reject_trade_offer(offer_id, current_user.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Trade offer not found or not authorized"
+            detail="Trade offer not found or not authorized",
         )
     return {"message": "Trade offer rejected"}
 
@@ -79,9 +79,9 @@ async def counter_trade_offer(
     offer_id: int,
     counter_offer: TradeOfferCreate,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Create a counter offer"""
+    """Create a counter offer."""
     trade_service = TradeService(db)
     return trade_service.create_counter_offer(offer_id, counter_offer, current_user.id)
 
@@ -90,9 +90,9 @@ async def counter_trade_offer(
 async def get_counter_offers(
     offer_id: int,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Get counter offers for a trade offer"""
+    """Get counter offers for a trade offer."""
     trade_service = TradeService(db)
     return trade_service.get_counter_offers(offer_id, current_user.id)
 
@@ -100,26 +100,36 @@ async def get_counter_offers(
 @router.get("/active", response_model=List[TradeResponse])
 async def get_active_trades(
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Get active trades for current user"""
+    """Get active trades for current user."""
     trade_service = TradeService(db)
     return trade_service.get_active_trades(current_user.id)
+
+
+@router.get("/history", response_model=List[TradeResponse])
+async def get_trade_history(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get all trades (active, completed, cancelled) for current user."""
+    trade_service = TradeService(db)
+    return trade_service.get_trade_history(current_user.id)
 
 
 @router.post("/{trade_id}/complete")
 async def complete_trade(
     trade_id: int,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Mark a trade as completed"""
+    """Mark a trade as completed."""
     trade_service = TradeService(db)
     success = trade_service.complete_trade(trade_id, current_user.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Trade not found or not authorized"
+            detail="Trade not found or not authorized",
         )
     return {"message": "Trade completed successfully"}
 
@@ -128,14 +138,14 @@ async def complete_trade(
 async def cancel_trade(
     trade_id: int,
     current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Cancel a trade"""
+    """Cancel a trade."""
     trade_service = TradeService(db)
     success = trade_service.cancel_trade(trade_id, current_user.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Trade not found or not authorized"
+            detail="Trade not found or not authorized",
         )
     return {"message": "Trade cancelled successfully"}
