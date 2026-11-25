@@ -16,17 +16,17 @@ const Footer: React.FC = () => {
               <span className="text-xl font-bold">Trade Me</span>
             </div>
             <p className="text-secondary-300 mb-4">
-              Trade your everyday items with others in your community. 
-              No money needed - just find what you want and trade what you have.
+              Trade your everyday items with others in your community. No money needed — browse free,
+              find what you want, and swap what you have.
             </p>
             <p className="text-secondary-400 text-sm">
-              Only $1/week subscription • Cancel anytime
+              Free to browse • Memberships $0.99/month or $10/year • Cancel anytime
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-4">Explore</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/items" className="text-secondary-300 hover:text-white transition-colors">
@@ -34,13 +34,13 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/dashboard" className="text-secondary-300 hover:text-white transition-colors">
-                  Dashboard
+                <Link to="/pricing" className="text-secondary-300 hover:text-white transition-colors">
+                  Pricing
                 </Link>
               </li>
               <li>
-                <Link to="/trades" className="text-secondary-300 hover:text-white transition-colors">
-                  My Trades
+                <Link to="/dashboard" className="text-secondary-300 hover:text-white transition-colors">
+                  Dashboard
                 </Link>
               </li>
               <li>
@@ -51,29 +51,24 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Support & Legal */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Support</h3>
+            <h3 className="text-lg font-semibold mb-4">Trust & Legal</h3>
             <ul className="space-y-2">
               <li>
-                <button className="text-secondary-300 hover:text-white transition-colors">
-                  Help Center
-                </button>
-              </li>
-              <li>
-                <button className="text-secondary-300 hover:text-white transition-colors">
+                <Link to="/safety" className="text-secondary-300 hover:text-white transition-colors">
                   Safety Tips
-                </button>
+                </Link>
               </li>
               <li>
-                <button className="text-secondary-300 hover:text-white transition-colors">
-                  Contact Us
-                </button>
-              </li>
-              <li>
-                <button className="text-secondary-300 hover:text-white transition-colors">
+                <Link to="/terms" className="text-secondary-300 hover:text-white transition-colors">
                   Terms of Service
-                </button>
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-secondary-300 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
               </li>
             </ul>
           </div>
@@ -82,15 +77,15 @@ const Footer: React.FC = () => {
         <div className="border-t border-secondary-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-secondary-400 text-sm">
-              © 2024 Trade Me. All rights reserved.
+              © {new Date().getFullYear()} Trade Me. All rights reserved.
             </p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <button className="text-secondary-400 hover:text-white transition-colors">
+            <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
+              <Link to="/privacy" className="text-secondary-400 hover:text-white transition-colors">
                 Privacy Policy
-              </button>
-              <button className="text-secondary-400 hover:text-white transition-colors">
-                Cookie Policy
-              </button>
+              </Link>
+              <Link to="/terms" className="text-secondary-400 hover:text-white transition-colors">
+                Terms of Service
+              </Link>
             </div>
           </div>
         </div>
